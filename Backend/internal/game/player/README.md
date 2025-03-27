@@ -1,4 +1,4 @@
-### Player
+# Player
 
 Represents the individual Connect4 players.
 

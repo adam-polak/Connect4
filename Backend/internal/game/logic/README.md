@@ -1,4 +1,4 @@
-### Logic
+# Logic
 
 This module is for enforcing game logic and providing the game loop.
 

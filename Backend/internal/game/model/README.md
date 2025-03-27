@@ -1,4 +1,4 @@
-### Model
+# Model
 
 For encoding and decoding the game state.
 
