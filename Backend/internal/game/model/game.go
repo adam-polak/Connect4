@@ -10,7 +10,7 @@ const (
 )
 
 type Game struct {
-	board [Column][Row]int
+	board [Column][Row]uint32
 }
 
 // Drop a piece in the desired column.
