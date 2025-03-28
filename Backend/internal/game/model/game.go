@@ -3,8 +3,10 @@ package model
 import "errors"
 
 const (
-	Column = 7
-	Row    = 6
+	Column     = 7
+	Row        = 6
+	RangeError = "Column is out of range"
+	FullError  = "Column is full"
 )
 
 type Game struct {
@@ -16,7 +18,7 @@ type Game struct {
 // the desired column c to drop a piece in.
 func (g Game) dropPiece(p bool, c int) error {
 	if c < 0 || c > Column-1 {
-		return errors.New("Column is out of range")
+		return errors.New(RangeError)
 	}
 
 	spot := -1
@@ -28,7 +30,7 @@ func (g Game) dropPiece(p bool, c int) error {
 	}
 
 	if spot == -1 {
-		return errors.New("Column is full")
+		return errors.New(FullError)
 	}
 
 	if p {
