@@ -41,3 +41,12 @@ func (g Game) dropPiece(p bool, c int) error {
 
 	return nil
 }
+
+// Return true if the column of the game board is full.
+func (g Game) columnFull(c int) (bool, error) {
+	if c < 0 || c > Column-1 {
+		return false, errors.New(RangeError)
+	}
+
+	return g.board[c][Row-1] != 0, nil
+}
