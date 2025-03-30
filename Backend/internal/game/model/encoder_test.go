@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func byteString(n uint64) string {
+func ByteString(n uint64) string {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, n)
 	var sb strings.Builder
@@ -53,8 +53,8 @@ func TestGame_EncodeSingleColumnFull(t *testing.T) {
 		if encoded != expected {
 			t.Errorf(
 				"\n\nExpected:\n\t %s \nActual:\n\t %s",
-				byteString(expected),
-				byteString(encoded),
+				ByteString(expected),
+				ByteString(encoded),
 			)
 		}
 	}
