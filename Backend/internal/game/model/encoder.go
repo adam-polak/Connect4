@@ -17,14 +17,14 @@ func (g Game) Encode() uint64 {
 	var encoding uint64 = 0
 
 	for i := range Column {
-		var shift, last uint32 = ColumnShift * uint32(i), 0
+		var shift, last = ColumnShift * i, Row
 		var v uint64 = 0 // v = encoded value of column
 		for j := range Row {
 			if g.board[i][j] == 0 {
-				last = uint32(j)
+				last = j
 				break
 			} else if g.board[i][j] == 2 {
-				v = 1 << (shift + uint32(j))
+				v = v | 1<<(shift+j)
 			}
 		}
 
