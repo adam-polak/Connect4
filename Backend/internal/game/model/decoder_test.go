@@ -45,3 +45,9 @@ func TestGame_EncodeAndDecode(t *testing.T) {
 		)
 	}
 }
+
+func TestGame_EncodeAndDecodeExhaustive(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		TestGame_EncodeAndDecode(t)
+	}
+}
