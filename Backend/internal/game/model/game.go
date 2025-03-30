@@ -16,9 +16,12 @@ type Game struct {
 // Drop a piece in the desired column.
 // Takes a player p (false for p1, true for p2) and
 // the desired column c to drop a piece in.
-func (g Game) dropPiece(p bool, c int) error {
-	if c < 0 || c > Column-1 {
-		return errors.New(RangeError)
+func (g Game) DropPiece(p bool, c int) error {
+	full, e := g.ColumnFull(c)
+	if e != nil {
+		return e
+	} else if full {
+		return errors.New(FullError)
 	}
 
 	spot := -1
@@ -43,7 +46,7 @@ func (g Game) dropPiece(p bool, c int) error {
 }
 
 // Return true if the column of the game board is full.
-func (g Game) columnFull(c int) (bool, error) {
+func (g Game) ColumnFull(c int) (bool, error) {
 	if c < 0 || c > Column-1 {
 		return false, errors.New(RangeError)
 	}
