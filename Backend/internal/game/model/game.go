@@ -32,10 +32,6 @@ func (g *Game) DropPiece(p bool, c int) error {
 		}
 	}
 
-	if spot == -1 {
-		return errors.New(FullError)
-	}
-
 	if p {
 		g.board[c][spot] = 1
 	} else {
