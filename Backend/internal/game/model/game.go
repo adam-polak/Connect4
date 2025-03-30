@@ -10,13 +10,13 @@ const (
 )
 
 type Game struct {
-	board [Column][Row]uint32
+	board [Column][Row]uint8
 }
 
 // Drop a piece in the desired column.
 // Takes a player p (false for p1, true for p2) and
 // the desired column c to drop a piece in.
-func (g Game) DropPiece(p bool, c int) error {
+func (g *Game) DropPiece(p bool, c int) error {
 	full, e := g.ColumnFull(c)
 	if e != nil {
 		return e
