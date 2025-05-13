@@ -5,8 +5,8 @@ import "errors"
 const (
 	Column     = 7
 	Row        = 6
-	RangeError = "Column is out of range"
-	FullError  = "Column is full"
+	RangeError = "column is out of range"
+	FullError  = "column is full"
 )
 
 type Game struct {
@@ -48,4 +48,10 @@ func (g Game) ColumnFull(c int) (bool, error) {
 	}
 
 	return g.board[c][Row-1] != 0, nil
+}
+
+// Get a copy of the current state of the board
+func (g Game) GetBoard() [Column][Row]uint8 {
+	e := g.Encode()
+	return Decode(e).board
 }
