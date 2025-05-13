@@ -9,34 +9,36 @@ type location struct {
 	row    int
 }
 
-func diagonal4InRow(b board) *location {
+type FourInARow [4]location
+
+func diagonal4InRow(b board) *FourInARow {
 	return nil
 }
 
-func vertical4InRow(b board) *location {
+func vertical4InRow(b board) *FourInARow {
 	return nil
 }
 
-func horizontal4InRow(b board) *location {
+func horizontal4InRow(b board) *FourInARow {
 	return nil
 }
 
-func checkForWin(g model.Game) bool {
+func has4InARow(g model.Game) *FourInARow {
 	b := g.GetBoard()
 	diag := diagonal4InRow(b)
 	if diag != nil {
-		return true
+		return diag
 	}
 
 	vert := vertical4InRow(b)
 	if vert != nil {
-		return true
+		return vert
 	}
 
 	hrz := horizontal4InRow(b)
 	if hrz != nil {
-		return true
+		return hrz
 	}
 
-	return false
+	return nil
 }
