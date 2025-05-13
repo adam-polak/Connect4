@@ -30,6 +30,35 @@ func Test_BasicVertical(t *testing.T) {
 	}
 }
 
+func Test_Last4Vertical(t *testing.T) {
+	for c := range model.Column {
+		g := new(model.Game)
+		for r := range model.Row {
+			if r < 2 {
+				g.DropPiece(c%2 != 0, c)
+			} else {
+				g.DropPiece(c%2 == 0, c)
+			}
+		}
+
+		f := vertical4InRow(g.GetBoard())
+		if f == nil {
+			t.Error("Should detect vertical four in a row")
+			return
+		}
+
+		for r := range 4 {
+			if f[r].Column != c {
+				t.Errorf("Expected column %d was %d", c, f[r].Column)
+			}
+
+			if f[r].Row != r+2 {
+				t.Errorf("Expected row %d was %d", r+2, f[r].Row)
+			}
+		}
+	}
+}
+
 func Test_BasicHorizontal(t *testing.T) {
 	for i := 0; i+4 < model.Column; i++ {
 		g := new(model.Game)

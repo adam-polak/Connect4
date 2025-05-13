@@ -9,6 +9,12 @@ const (
 	FullError  = "column is full"
 )
 
+const (
+	NoPlayer = iota
+	PlayerOne
+	PlayerTwo
+)
+
 type Game struct {
 	board [Column][Row]uint8
 }
@@ -26,16 +32,16 @@ func (g *Game) DropPiece(p bool, c int) error {
 
 	spot := -1
 	for i := 0; i < len(g.board[c]); i++ {
-		if g.board[c][i] == 0 {
+		if g.board[c][i] == NoPlayer {
 			spot = i
 			break
 		}
 	}
 
 	if p {
-		g.board[c][spot] = 1
+		g.board[c][spot] = PlayerOne
 	} else {
-		g.board[c][spot] = 2
+		g.board[c][spot] = PlayerTwo
 	}
 
 	return nil
@@ -47,7 +53,7 @@ func (g Game) ColumnFull(c int) (bool, error) {
 		return false, errors.New(RangeError)
 	}
 
-	return g.board[c][Row-1] != 0, nil
+	return g.board[c][Row-1] != NoPlayer, nil
 }
 
 // Get a copy of the current state of the board
