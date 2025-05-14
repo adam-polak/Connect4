@@ -4,6 +4,10 @@ import (
 	"connect4/server/internal/game/model"
 )
 
+const (
+	target = 4
+)
+
 type board [model.Column][model.Row]uint8
 
 type Location struct {
@@ -19,9 +23,8 @@ func diagonal4InRow(b board) *FourInARow {
 
 func vertical4InRow(b board) *FourInARow {
 	f := new(FourInARow)
-	target := 4
 	for c := 0; c < model.Column; c++ {
-		for p1 := 0; p1+3 < model.Row; {
+		for p1 := 0; p1+target-1 < model.Row; {
 			start := b[c][p1]
 			if start == model.NoPlayer {
 				p1++
@@ -45,13 +48,40 @@ func vertical4InRow(b board) *FourInARow {
 				}
 			}
 		}
-
 	}
 
 	return nil
 }
 
 func horizontal4InRow(b board) *FourInARow {
+	f := new(FourInARow)
+	for r := range model.Row {
+		for p1 := 0; p1+target-1 < model.Column; {
+			start := b[p1][r]
+			if start == model.NoPlayer {
+				p1++
+				continue
+			}
+
+			for p2 := p1; p2 < p1+target; p2++ {
+				if b[p2][r] != start {
+					p1 = p2
+					break
+				}
+
+				i := p2 - p1
+				f[i] = Location{
+					Column: p2,
+					Row:    r,
+				}
+
+				if p2 == p1+target-1 {
+					return f
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
