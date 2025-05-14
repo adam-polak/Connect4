@@ -19,33 +19,33 @@ func diagonal4InRow(b board) *FourInARow {
 
 func vertical4InRow(b board) *FourInARow {
 	f := new(FourInARow)
-	for c := range model.Column {
-
-		// * note use sliding window instead
-		for r := 0; r < model.Row-4; r++ {
-			start := b[c][r]
+	target := 4
+	for c := 0; c < model.Column; c++ {
+		for p1 := 0; p1+3 < model.Row; {
+			start := b[c][p1]
 			if start == model.NoPlayer {
-				break
+				p1++
+				continue
 			}
 
-			len := 0
-			for r2 := r; r2 < r+4; r2++ {
-				if b[c][r2] != start || len == 4 {
+			for p2 := p1; p2 < p1+target; p2++ {
+				if b[c][p2] != start {
+					p1 = p2
 					break
 				}
 
-				f[r2-r] = Location{
+				i := p2 - p1
+				f[i] = Location{
 					Column: c,
-					Row:    r2,
+					Row:    p2,
 				}
 
-				len++
-			}
-
-			if len == 4 {
-				return f
+				if p2 == p1+target-1 {
+					return f
+				}
 			}
 		}
+
 	}
 
 	return nil

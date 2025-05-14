@@ -6,7 +6,7 @@ import (
 )
 
 func Test_BasicVertical(t *testing.T) {
-	for c := range model.Column {
+	for c := 0; c < model.Column; c++ {
 		g := new(model.Game)
 		for range 4 {
 			g.DropPiece(c%2 == 0, c)
@@ -21,10 +21,12 @@ func Test_BasicVertical(t *testing.T) {
 		for r := range 4 {
 			if f[r].Column != c {
 				t.Errorf("Expected column %d was %d", c, f[r].Column)
+				return
 			}
 
 			if f[r].Row != r {
 				t.Errorf("Expected row %d was %d", r, f[r].Row)
+				return
 			}
 		}
 	}
@@ -50,10 +52,12 @@ func Test_Last4Vertical(t *testing.T) {
 		for r := range 4 {
 			if f[r].Column != c {
 				t.Errorf("Expected column %d was %d", c, f[r].Column)
+				return
 			}
 
 			if f[r].Row != r+2 {
 				t.Errorf("Expected row %d was %d", r+2, f[r].Row)
+				return
 			}
 		}
 	}
@@ -75,10 +79,12 @@ func Test_BasicHorizontal(t *testing.T) {
 		for l := range 4 {
 			if f[l].Row != 0 {
 				t.Errorf("Expected row 0 was %d", f[l].Row)
+				return
 			}
 
 			if f[l].Column != l+i {
 				t.Errorf("Expected column %d was %d", l+i, f[l].Column)
+				return
 			}
 		}
 	}
