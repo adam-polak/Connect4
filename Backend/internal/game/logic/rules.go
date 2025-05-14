@@ -23,7 +23,7 @@ func diagonal4InRow(b board) *FourInARow {
 
 func vertical4InRow(b board) *FourInARow {
 	f := new(FourInARow)
-	for c := 0; c < model.Column; c++ {
+	for c := range model.Column {
 		for p1 := 0; p1+target-1 < model.Row; {
 			start := b[c][p1]
 			if start == model.NoPlayer {
