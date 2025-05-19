@@ -8,7 +8,7 @@ import (
 func Test_BasicVertical(t *testing.T) {
 	for c := 0; c < model.Column; c++ {
 		g := new(model.Game)
-		for range 4 {
+		for range target {
 			g.DropPiece(c%2 == 0, c)
 		}
 
@@ -18,7 +18,7 @@ func Test_BasicVertical(t *testing.T) {
 			return
 		}
 
-		for r := range 4 {
+		for r := range target {
 			if f[r].Column != c {
 				t.Errorf("Expected column %d was %d", c, f[r].Column)
 				return
@@ -36,7 +36,7 @@ func Test_Last4Vertical(t *testing.T) {
 	for c := range model.Column {
 		g := new(model.Game)
 		for r := range model.Row {
-			if r < 2 {
+			if r < model.Row-target {
 				g.DropPiece(c%2 != 0, c)
 			} else {
 				g.DropPiece(c%2 == 0, c)
@@ -49,13 +49,13 @@ func Test_Last4Vertical(t *testing.T) {
 			return
 		}
 
-		for r := range 4 {
+		for r := range target {
 			if f[r].Column != c {
 				t.Errorf("Expected column %d was %d", c, f[r].Column)
 				return
 			}
 
-			if f[r].Row != r+2 {
+			if f[r].Row != r+model.Row-target {
 				t.Errorf("Expected row %d was %d", r+2, f[r].Row)
 				return
 			}
@@ -64,9 +64,9 @@ func Test_Last4Vertical(t *testing.T) {
 }
 
 func Test_BasicHorizontal(t *testing.T) {
-	for i := 0; i+4 < model.Column; i++ {
+	for i := 0; i+target-1 < model.Column; i++ {
 		g := new(model.Game)
-		for c := i; c < i+4; c++ {
+		for c := i; c < i+target; c++ {
 			g.DropPiece(i%2 == 0, c)
 		}
 
@@ -76,7 +76,7 @@ func Test_BasicHorizontal(t *testing.T) {
 			return
 		}
 
-		for l := range 4 {
+		for l := range target {
 			if f[l].Row != 0 {
 				t.Errorf("Expected row 0 was %d", f[l].Row)
 				return
@@ -84,6 +84,37 @@ func Test_BasicHorizontal(t *testing.T) {
 
 			if f[l].Column != l+i {
 				t.Errorf("Expected column %d was %d", l+i, f[l].Column)
+				return
+			}
+		}
+	}
+}
+
+func Test_LeftToRightDiagonal(t *testing.T) {
+	for c := range model.Column - target + 1 {
+		g := new(model.Game)
+		for r := range target {
+			for i := range r {
+				g.DropPiece(i+r%2 == 0, c+r)
+			}
+
+			g.DropPiece(c%2 == 0, c+r)
+		}
+
+		f := diagonal4InRow(g.GetBoard())
+		if f == nil {
+			t.Error("Should detect diagonal four in a row")
+			return
+		}
+
+		for i := range target {
+			if f[i].Column != c+i {
+				t.Errorf("Expected column %d was %d", c, f[i].Column)
+				return
+			}
+
+			if f[i].Row != i {
+				t.Errorf("Expected row %d was %d", i, f[i].Row)
 				return
 			}
 		}
