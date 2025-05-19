@@ -59,7 +59,7 @@ func Test_Last4Vertical(t *testing.T) {
 			}
 
 			if f[r].Row != r+model.Row-target {
-				t.Errorf("Expected row %d was %d", r+2, f[r].Row)
+				t.Errorf("Expected row %d was %d", r+model.Row-target, f[r].Row)
 				return
 			}
 		}

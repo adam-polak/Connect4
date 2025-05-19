@@ -15,7 +15,7 @@ type Location struct {
 	Row    int
 }
 
-type FourInARow [4]Location
+type FourInARow [target]Location
 
 func diagonal4InRow(b board) *FourInARow {
 	l := leftDiagonal4InRow(b)
