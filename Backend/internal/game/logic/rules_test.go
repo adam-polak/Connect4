@@ -174,3 +174,48 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 
 	fmt.Println("✅ left to right diagonal")
 }
+
+func Test_RightToLeftDiagonal(t *testing.T) {
+	for c := model.Column - target; c >= 0; c-- {
+		for r := 0; r+target-1 < model.Row; r++ {
+			loc := Location{
+				Column: c,
+				Row:    r,
+			}
+
+			g := new(model.Game)
+			for range target {
+				for range loc.Row {
+					g.DropPiece(
+						(c-loc.Column)%2 == 0,
+						loc.Column,
+					)
+				}
+
+				g.DropPiece(c%2 == 0, loc.Column)
+				loc.Column++
+				loc.Row++
+			}
+
+			f := diagonal4InRow(g.GetBoard())
+			if f == nil {
+				t.Error("Should detect diagonal four in a row")
+				return
+			}
+
+			for i := range target {
+				if f[i].Column != loc.Column-target+i {
+					t.Errorf("Expected column %d was %d", loc.Column-target+i, f[i].Column)
+					return
+				}
+
+				if f[i].Row != loc.Row-target+i {
+					t.Errorf("Expected row %d was %d", loc.Row-target+i, f[i].Row)
+					return
+				}
+			}
+		}
+	}
+
+	fmt.Println("✅ right to left diagonal")
+}
