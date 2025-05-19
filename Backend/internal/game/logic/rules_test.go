@@ -2,6 +2,7 @@ package logic
 
 import (
 	"connect4/server/internal/game/model"
+	"fmt"
 	"testing"
 )
 
@@ -30,6 +31,8 @@ func Test_BasicVertical(t *testing.T) {
 			}
 		}
 	}
+
+	fmt.Println("✅ basic vertical test")
 }
 
 func Test_Last4Vertical(t *testing.T) {
@@ -61,6 +64,8 @@ func Test_Last4Vertical(t *testing.T) {
 			}
 		}
 	}
+
+	fmt.Println("✅ last 4 vertical test")
 }
 
 func Test_BasicHorizontal(t *testing.T) {
@@ -88,9 +93,11 @@ func Test_BasicHorizontal(t *testing.T) {
 			}
 		}
 	}
+
+	fmt.Println("✅ basic horizontal test")
 }
 
-func Test_LeftToRightDiagonal(t *testing.T) {
+func Test_LeftToRightDiagonalBasic(t *testing.T) {
 	for c := range model.Column - target + 1 {
 		g := new(model.Game)
 		for r := range target {
@@ -118,5 +125,7 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 				return
 			}
 		}
+
+		fmt.Println("✅ basic left to right diagonal")
 	}
 }
