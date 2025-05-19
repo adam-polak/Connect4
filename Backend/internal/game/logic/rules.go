@@ -75,6 +75,50 @@ func leftDiagonal4InRow(b board) *FourInARow {
 }
 
 func rightDiagonal4InRow(b board) *FourInARow {
+	f := new(FourInARow)
+	for c := model.Column - 1; c >= 0; c++ {
+		if c+target-1 >= model.Column {
+			break
+		}
+
+		for r := 0; r < model.Row; r++ {
+			if r+target-1 >= model.Row {
+				break
+			}
+
+			loc := Location{
+				Column: c,
+				Row:    r,
+			}
+
+			p := b[c][r]
+			if p == model.NoPlayer {
+				continue
+			}
+
+			len := 0
+			for p == b[loc.Column][loc.Row] && loc.Column < model.Column && loc.Row < model.Row {
+				// Create new location
+				nLoc := Location{
+					Column: loc.Column,
+					Row:    loc.Row,
+				}
+				// Set location in FourInARow obj
+				f[len] = nLoc
+				// Increment length
+				len++
+				// Set current player at location
+				p = b[nLoc.Column][nLoc.Row]
+				// Traverse right diagonally
+				loc.Column--
+				loc.Row++
+				if len == target {
+					return f
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
