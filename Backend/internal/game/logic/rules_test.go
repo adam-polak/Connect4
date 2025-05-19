@@ -139,10 +139,10 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 			}
 
 			g := new(model.Game)
-			for i := range target {
+			for range target {
 				for range loc.Row {
 					g.DropPiece(
-						c+i%2 == 0,
+						(c-loc.Column)%2 == 0,
 						loc.Column,
 					)
 				}
@@ -159,7 +159,6 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 			}
 
 			for i := range target {
-				fmt.Printf("Checking %d\n", i)
 				if f[i].Column != loc.Column-target+i {
 					t.Errorf("Expected column %d was %d", loc.Column-target+i, f[i].Column)
 					return
@@ -171,8 +170,6 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 				}
 			}
 		}
-
-		fmt.Printf("Pass col %d\n", c)
 	}
 
 	fmt.Println("✅ left to right diagonal")
