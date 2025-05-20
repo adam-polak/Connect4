@@ -20,7 +20,7 @@ type Game struct {
 }
 
 // Drop a piece in the desired column.
-// Takes a player p (false for p1, true for p2) and
+// Takes a player p (true for p1, false for p2) and
 // the desired column c to drop a piece in.
 func (g *Game) DropPiece(p bool, c int) error {
 	full, e := g.ColumnFull(c)
