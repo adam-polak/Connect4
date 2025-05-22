@@ -1,6 +1,7 @@
 package gameflow
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -78,5 +79,90 @@ func Test_RemovePlayerShouldFailWhenNoPlayer(t *testing.T) {
 	NewPlayer("key", "bob")
 	if RemovePlayer("test") == nil {
 		t.Error("Remove player should throw")
+	}
+}
+
+func Test_RemovePlayerSmall(t *testing.T) {
+	defer cleanupPlayers()
+	arr := [...]string{"i", "c", "a", "d", "e", "u", "w", "o"}
+	for i := range arr {
+		p, err := NewPlayer(arr[i], arr[i])
+		if p == nil || err != nil {
+			t.Error("Failed to create player")
+			return
+		}
+	}
+
+	for i, j := 0, len(arr)-1; i < j; i, j = i+1, j-1 {
+		if RemovePlayer(arr[i]) != nil || RemovePlayer(arr[j]) != nil {
+			t.Error("Failed to remove player")
+			return
+		}
+
+		for x, y := i+1, j-1; x < y; x, y = x+1, y-1 {
+			p1, _ := GetPlayer(arr[x])
+			if p1 == nil {
+				t.Error("Player should exist")
+				return
+			}
+
+			p2, _ := GetPlayer(arr[y])
+			if p2 == nil {
+				t.Error("Player should exist")
+				return
+			}
+		}
+	}
+}
+
+func Test_RemovePlayerLarge(t *testing.T) {
+	defer cleanupPlayers()
+	arr := [...]string{"i", "c", "a", "d", "e", "u", "w", "o"}
+	len := len(arr)
+	size := 15
+	fmt.Println("----------------")
+	for i := range size {
+		s := ""
+		for j := range (i / len) + 1 {
+			s += arr[(i+j)%len]
+		}
+		fmt.Println(s)
+
+		p, err := NewPlayer(s, "joe")
+		if p == nil || err != nil {
+			t.Error("Failed to create player")
+			return
+		}
+	}
+	fmt.Println("----------------")
+
+	for i := range size {
+		s := ""
+		for j := range (i / len) + 1 {
+			s += arr[(i+j)%len]
+		}
+
+		fmt.Printf("Removing %s\n", s)
+		fmt.Println("----------------")
+
+		if RemovePlayer(s) != nil {
+			t.Error("Failed to remove player")
+			return
+		}
+
+		for j := i + 1; j < size; j++ {
+			s2 := ""
+			for x := range (j / len) + 1 {
+				s2 += arr[(j+x)%len]
+			}
+
+			fmt.Println(s2)
+
+			p, _ := GetPlayer(s2)
+			if p == nil {
+				t.Error("Player should exist")
+				return
+			}
+		}
 	}
 }
