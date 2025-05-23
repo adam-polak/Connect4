@@ -7,9 +7,8 @@ import (
 )
 
 const (
-	PlayersListNotInitialized = "player list not initialized"
-	PlayerDoesNotExist        = "player doesn't exist"
-	PlayerAlreadyExists       = "player already exists"
+	PlayerDoesNotExist  = "player doesn't exist"
+	PlayerAlreadyExists = "player already exists"
 )
 
 type Player struct {
@@ -98,10 +97,6 @@ func getPlayer(key string) *Player {
 }
 
 func GetPlayer(key string) (*Player, error) {
-	if players == nil {
-		return nil, errors.New(PlayersListNotInitialized)
-	}
-
 	p := getPlayer(key)
 	if p == nil {
 		return nil, errors.New(PlayerDoesNotExist)
