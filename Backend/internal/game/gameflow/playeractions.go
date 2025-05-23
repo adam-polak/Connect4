@@ -34,6 +34,10 @@ func (p *Player) notifyObservers(action interface{}) {
 	}
 }
 
+func (p *Player) RegisterObserver(o PlayerObserver) {
+	p.observers = append(p.observers, o)
+}
+
 type OpponentPlayed struct {
 	Column int
 }
