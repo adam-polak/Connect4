@@ -13,8 +13,9 @@ const (
 )
 
 type Player struct {
-	Username string
-	game     *GameOrchestrator
+	Username  string
+	observers []PlayerObserver
+	game      *GameOrchestrator
 }
 
 type playerNode struct {
