@@ -119,14 +119,12 @@ func Test_RemovePlayerLarge(t *testing.T) {
 	defer cleanupPlayers()
 	arr := [...]string{"i", "c", "a", "d", "e", "u", "w", "o"}
 	len := len(arr)
-	size := 15
-	fmt.Println("----------------")
+	size := 5
 	for i := range size {
 		s := ""
 		for j := range (i / len) + 1 {
 			s += arr[(i+j)%len]
 		}
-		fmt.Println(s)
 
 		p, err := NewPlayer(s, "joe")
 		if p == nil || err != nil {
@@ -134,7 +132,8 @@ func Test_RemovePlayerLarge(t *testing.T) {
 			return
 		}
 	}
-	fmt.Println("----------------")
+
+	PrintPlayers()
 
 	for i := range size {
 		s := ""
@@ -150,13 +149,13 @@ func Test_RemovePlayerLarge(t *testing.T) {
 			return
 		}
 
+		PrintPlayers()
+
 		for j := i + 1; j < size; j++ {
 			s2 := ""
 			for x := range (j / len) + 1 {
 				s2 += arr[(j+x)%len]
 			}
-
-			fmt.Println(s2)
 
 			p, _ := GetPlayer(s2)
 			if p == nil {

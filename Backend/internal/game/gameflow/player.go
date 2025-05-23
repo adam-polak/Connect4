@@ -2,6 +2,7 @@ package gameflow
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -116,7 +117,11 @@ func replaceNode(n *playerNode) *playerNode {
 
 	r := n.right
 	for r.left != nil {
+		prev := r
 		r = r.left
+		if r.left == nil {
+			prev.left = nil
+		}
 	}
 
 	r.left = n.left
@@ -131,6 +136,11 @@ func doRemove(n *playerNode, key string) bool {
 
 	cmp := strings.Compare(n.key, key)
 	if cmp == 0 {
+		if n == players {
+			players = replaceNode(n)
+			fmt.Println(players.key)
+		}
+
 		return true
 	} else if cmp < 0 && doRemove(n.left, key) {
 		n.left = replaceNode(n.left)
@@ -150,6 +160,22 @@ func RemovePlayer(key string) error {
 	doRemove(players, key)
 
 	return nil
+}
+
+func printPlayers(n *playerNode, level int) {
+	if n == nil {
+		return
+	}
+
+	fmt.Printf("%d: %s\n", level, n.key)
+	printPlayers(n.left, level+1)
+	printPlayers(n.right, level+1)
+}
+
+func PrintPlayers() {
+	fmt.Println("Players\n-------------------------")
+	printPlayers(players, 1)
+	fmt.Println("-------------------------")
 }
 
 func (p *Player) SetGame(g *GameOrchestrator) {
