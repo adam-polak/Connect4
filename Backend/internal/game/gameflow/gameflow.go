@@ -43,5 +43,7 @@ func GetGameOrchestrator(p *Player) *GameOrchestrator {
 		availableGames.next = n.next
 	}
 
+	p.game = g
+
 	return g
 }

@@ -170,7 +170,3 @@ func RemovePlayer(key string) error {
 func removeAllPlayers() {
 	players = nil
 }
-
-func (p *Player) SetGame(g *GameOrchestrator) {
-	p.game = g
-}
