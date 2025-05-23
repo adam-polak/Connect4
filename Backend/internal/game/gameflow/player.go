@@ -48,6 +48,7 @@ func addPlayer(key string, p *Player) {
 		key:    key,
 		player: p,
 	}
+
 	n := players
 	if n == nil {
 		players = pn
