@@ -68,6 +68,15 @@ type doPlay struct {
 	Column int
 }
 
+type GameOver struct {
+	Winner string
+}
+
+func (g *GameOrchestrator) notifyPlayers(action interface{}) {
+	g.player1.handleAction(action)
+	g.player2.handleAction(action)
+}
+
 func (g *GameOrchestrator) handleAction(p *Player, action interface{}) bool {
 	if g.player1 != p && g.player2 != p {
 		panic("player is not in game")
@@ -75,11 +84,19 @@ func (g *GameOrchestrator) handleAction(p *Player, action interface{}) bool {
 
 	switch v := action.(type) {
 	case doPlay:
+		if g.engine.GetWinner() != nil {
+			return false
+		}
+
 		err := g.engine.DropPiece(&p.Username, v.Column)
 		if err != nil {
 			return false
 		} else {
 			g.getOpponent(p).handleAction(OpponentPlayed(v))
+			if g.engine.GetWinner() != nil {
+				g.notifyPlayers(GameOver{Winner: *g.engine.GetWinner()})
+			}
+
 			return true
 		}
 	default:

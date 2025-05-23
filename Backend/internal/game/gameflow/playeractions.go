@@ -12,6 +12,10 @@ type PlayerObserver interface {
 	HandleAction(interface{})
 }
 
+type OpponentPlayed struct {
+	Column int
+}
+
 func (p *Player) PlayPiece(col int) error {
 	if p.game == nil || !p.game.readyToPlay {
 		return errors.New(PlayerNotInAGame)
@@ -38,15 +42,6 @@ func (p *Player) RegisterObserver(o PlayerObserver) {
 	p.observers = append(p.observers, o)
 }
 
-type OpponentPlayed struct {
-	Column int
-}
-
 func (p *Player) handleAction(action interface{}) {
-	switch v := action.(type) {
-	case OpponentPlayed:
-		p.notifyObservers(v)
-	default:
-		panic("action not supported")
-	}
+	p.notifyObservers(action)
 }
