@@ -110,21 +110,27 @@ func GetPlayer(key string) (*Player, error) {
 
 func replaceNode(n *playerNode) *playerNode {
 	if n == nil {
+		fmt.Println("here")
 		return nil
 	} else if n.right == nil {
 		return n.left
 	}
 
+	prev := n
 	r := n.right
 	for r.left != nil {
-		prev := r
+		prev = r
 		r = r.left
-		if r.left == nil {
-			prev.left = nil
-		}
 	}
 
+	// replace left branch of r with node's left branch
 	r.left = n.left
+	// replace previous node left with right branch of r
+	prev.left = r.right
+	// replace right branch of r with node's right branch
+	if n.right != r {
+		r.right = n.right
+	}
 
 	return r
 }
@@ -138,7 +144,6 @@ func doRemove(n *playerNode, key string) bool {
 	if cmp == 0 {
 		if n == players {
 			players = replaceNode(n)
-			fmt.Println(players.key)
 		}
 
 		return true
@@ -162,20 +167,8 @@ func RemovePlayer(key string) error {
 	return nil
 }
 
-func printPlayers(n *playerNode, level int) {
-	if n == nil {
-		return
-	}
-
-	fmt.Printf("%d: %s\n", level, n.key)
-	printPlayers(n.left, level+1)
-	printPlayers(n.right, level+1)
-}
-
-func PrintPlayers() {
-	fmt.Println("Players\n-------------------------")
-	printPlayers(players, 1)
-	fmt.Println("-------------------------")
+func removeAllPlayers() {
+	players = nil
 }
 
 func (p *Player) SetGame(g *GameOrchestrator) {

@@ -1,16 +1,11 @@
 package gameflow
 
 import (
-	"fmt"
 	"testing"
 )
 
-func cleanupPlayers() {
-	players = nil
-}
-
 func Test_NewPlayerBasic(t *testing.T) {
-	defer cleanupPlayers()
+	defer removeAllPlayers()
 	p, err := NewPlayer("hello", "bob")
 	if p == nil || err != nil {
 		t.Error("Should create a player")
@@ -19,7 +14,7 @@ func Test_NewPlayerBasic(t *testing.T) {
 }
 
 func Test_NewPlayerFailsWithDifferentUsername(t *testing.T) {
-	defer cleanupPlayers()
+	defer removeAllPlayers()
 	k := "key"
 	NewPlayer(k, "bob")
 	_, err := NewPlayer(k, "sue")
@@ -30,7 +25,7 @@ func Test_NewPlayerFailsWithDifferentUsername(t *testing.T) {
 }
 
 func Test_NewPlayerIsTheSameObject(t *testing.T) {
-	defer cleanupPlayers()
+	defer removeAllPlayers()
 	k := "superman"
 	u := "bob"
 	p1, e1 := NewPlayer(k, u)
@@ -47,7 +42,7 @@ func Test_NewPlayerIsTheSameObject(t *testing.T) {
 }
 
 func Test_NewPlayerEqualsGetPlayer(t *testing.T) {
-	defer cleanupPlayers()
+	defer removeAllPlayers()
 	k := "supersecret"
 	u := "bob"
 	p1, e1 := NewPlayer(k, u)
@@ -75,7 +70,7 @@ func Test_RemovePlayerShouldFailWhenEmpty(t *testing.T) {
 }
 
 func Test_RemovePlayerShouldFailWhenNoPlayer(t *testing.T) {
-	defer cleanupPlayers()
+	defer removeAllPlayers()
 	NewPlayer("key", "bob")
 	if RemovePlayer("test") == nil {
 		t.Error("Remove player should throw")
@@ -83,7 +78,7 @@ func Test_RemovePlayerShouldFailWhenNoPlayer(t *testing.T) {
 }
 
 func Test_RemovePlayerSmall(t *testing.T) {
-	defer cleanupPlayers()
+	defer removeAllPlayers()
 	arr := [...]string{"i", "c", "a", "d", "e", "u", "w", "o"}
 	for i := range arr {
 		p, err := NewPlayer(arr[i], arr[i])
@@ -116,10 +111,10 @@ func Test_RemovePlayerSmall(t *testing.T) {
 }
 
 func Test_RemovePlayerLarge(t *testing.T) {
-	defer cleanupPlayers()
+	defer removeAllPlayers()
 	arr := [...]string{"i", "c", "a", "d", "e", "u", "w", "o"}
 	len := len(arr)
-	size := 5
+	size := 500
 	for i := range size {
 		s := ""
 		for j := range (i / len) + 1 {
@@ -133,23 +128,16 @@ func Test_RemovePlayerLarge(t *testing.T) {
 		}
 	}
 
-	PrintPlayers()
-
 	for i := range size {
 		s := ""
 		for j := range (i / len) + 1 {
 			s += arr[(i+j)%len]
 		}
 
-		fmt.Printf("Removing %s\n", s)
-		fmt.Println("----------------")
-
 		if RemovePlayer(s) != nil {
 			t.Error("Failed to remove player")
 			return
 		}
-
-		PrintPlayers()
 
 		for j := i + 1; j < size; j++ {
 			s2 := ""
