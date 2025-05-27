@@ -189,22 +189,23 @@ func horizontal4InRow(b board) *FourInARow {
 
 func Has4InARow(g model.Game) *FourInARow {
 	b := g.GetBoard()
-	diag := diagonal4InRow(b)
-	if diag != nil {
-		return diag
-	}
+	// diag := diagonal4InRow(b)
+	// if diag != nil {
+	// 	return diag
+	// }
 
-	vert := vertical4InRow(b)
-	if vert != nil {
-		return vert
-	}
+	// vert := vertical4InRow(b)
+	// if vert != nil {
+	// 	return vert
+	// }
 
-	hrz := horizontal4InRow(b)
-	if hrz != nil {
-		return hrz
-	}
+	// hrz := horizontal4InRow(b)
+	// if hrz != nil {
+	// 	return hrz
+	// }
 
-	return nil
+	// return nil
+	return has4InARow(b)
 }
 
 func (l1 Location) Compare(l2 Location) int {
@@ -266,23 +267,31 @@ func has4InARow(b board) *FourInARow {
 	directions := []direction{rightDirection(), upRightDirection(), downRightDirection(), upDirection()}
 	f := new(FourInARow)
 	for c := range model.Column {
-		canRight, canUp := c+target-1 < model.Column, true
-		for r := range model.Row {
-			canUp = r+target-1 < model.Row
-			if !canRight && !canUp {
-				break
-			}
+		if c+target-1 >= model.Column {
+			for r := range model.Row {
+				if r+target-1 >= model.Row {
+					break
+				}
 
-			if canRight && canUp {
+				if checkDirection(b, f, c, r, directions[3]) {
+					return f
+				}
+			}
+		} else {
+			for r := range model.Row {
+				if r+target-1 >= model.Row {
+					if checkDirection(b, f, c, r, directions[0]) {
+						return f
+					}
+
+					continue
+				}
+
 				for i := range directions {
 					if checkDirection(b, f, c, r, directions[i]) {
 						return f
 					}
 				}
-			} else if canRight && checkDirection(b, f, c, r, directions[0]) {
-				return f
-			} else if canUp && checkDirection(b, f, c, r, directions[3]) {
-				return f
 			}
 		}
 	}
