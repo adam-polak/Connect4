@@ -189,24 +189,22 @@ func horizontal4InRow(b board) *FourInARow {
 
 func Has4InARow(g model.Game) *FourInARow {
 	b := g.GetBoard()
-	// diag := diagonal4InRow(b)
-	// if diag != nil {
-	// 	return diag
-	// }
+	diag := diagonal4InRow(b)
+	if diag != nil {
+		return diag
+	}
 
-	// vert := vertical4InRow(b)
-	// if vert != nil {
-	// 	return vert
-	// }
+	vert := vertical4InRow(b)
+	if vert != nil {
+		return vert
+	}
 
-	// hrz := horizontal4InRow(b)
-	// if hrz != nil {
-	// 	return hrz
-	// }
+	hrz := horizontal4InRow(b)
+	if hrz != nil {
+		return hrz
+	}
 
-	// return nil
-
-	return has4InARow(b)
+	return nil
 }
 
 func (l1 Location) Compare(l2 Location) int {
