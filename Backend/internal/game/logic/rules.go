@@ -258,6 +258,23 @@ func checkDirection(b board, f *FourInARow, col int, row int, dir direction) boo
 		Row:    row,
 	}
 
+	last := Location{
+		Column: col,
+		Row:    row,
+	}
+
+	if dir.dx != 0 {
+		last.Column = last.Column + (dir.dx * target) - 1
+	}
+
+	if dir.dy != 0 {
+		last.Row = last.Row + (dir.dy * target) - 1
+	}
+
+	if b[last.Column][last.Row] != b[col][row] {
+		return false
+	}
+
 	found, _ := targetSearch(b, f, 1, dir)
 	return found
 }
