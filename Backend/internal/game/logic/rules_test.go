@@ -13,7 +13,7 @@ func Test_BasicVertical(t *testing.T) {
 			g.DropPiece(c%2 == 0, c)
 		}
 
-		f := vertical4InRow(g.GetBoard())
+		f := Has4InARow(*g)
 		if f == nil {
 			t.Error("Should detect vertical four in a row")
 			return
@@ -46,7 +46,7 @@ func Test_Last4Vertical(t *testing.T) {
 			}
 		}
 
-		f := vertical4InRow(g.GetBoard())
+		f := Has4InARow(*g)
 		if f == nil {
 			t.Error("Should detect vertical four in a row")
 			return
@@ -75,7 +75,7 @@ func Test_BasicHorizontal(t *testing.T) {
 			g.DropPiece(i%2 == 0, c)
 		}
 
-		f := horizontal4InRow(g.GetBoard())
+		f := Has4InARow(*g)
 		if f == nil {
 			t.Error("Should detect horizontal four in a row")
 			return
@@ -108,7 +108,7 @@ func Test_LeftToRightDiagonalBasic(t *testing.T) {
 			g.DropPiece(c%2 == 0, c+r)
 		}
 
-		f := diagonal4InRow(g.GetBoard())
+		f := Has4InARow(*g)
 		if f == nil {
 			t.Error("Should detect diagonal four in a row")
 			return
@@ -152,7 +152,7 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 				loc.Row++
 			}
 
-			f := diagonal4InRow(g.GetBoard())
+			f := Has4InARow(*g)
 			if f == nil {
 				t.Error("Should detect diagonal four in a row")
 				return
@@ -197,7 +197,7 @@ func Test_RightToLeftDiagonal(t *testing.T) {
 				loc.Row++
 			}
 
-			f := diagonal4InRow(g.GetBoard())
+			f := Has4InARow(*g)
 			if f == nil {
 				t.Error("Should detect diagonal four in a row")
 				return
