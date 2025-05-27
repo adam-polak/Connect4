@@ -2,7 +2,6 @@ package logic
 
 import (
 	"connect4/server/internal/game/model"
-	"errors"
 )
 
 const (
@@ -211,20 +210,6 @@ type direction struct {
 	dy int // change in row
 }
 
-func upDirection() direction {
-	return direction{
-		dx: 0,
-		dy: 1,
-	}
-}
-
-func rightDirection() direction {
-	return direction{
-		dx: 1,
-		dy: 0,
-	}
-}
-
 func upRightDirection() direction {
 	return direction{
 		dx: 1,
@@ -237,103 +222,4 @@ func downRightDirection() direction {
 		dx: 1,
 		dy: -1,
 	}
-}
-
-func checkDirection(b Board, f *FourInARow, col int, row int, dir direction) bool {
-	if b[col][row] == model.NoPlayer {
-		return false
-	}
-
-	f[0] = Location{
-		Column: col,
-		Row:    row,
-	}
-
-	last := Location{
-		Column: col,
-		Row:    row,
-	}
-
-	if dir.dx > 0 {
-		last.Column = last.Column + (dir.dx * target) - 1
-	} else if dir.dx < 0 {
-		last.Column = last.Column + (dir.dx * target) + 1
-	}
-
-	if dir.dy > 0 {
-		last.Row = last.Row + (dir.dy * target) - 1
-	} else if dir.dy < 0 {
-		last.Row = last.Row + (dir.dy * target) + 1
-	}
-
-	if b[last.Column][last.Row] != b[col][row] {
-		return false
-	}
-
-	found, _ := targetSearch(b, f, 1, dir)
-	return found
-}
-
-func has4InARow(b Board) *FourInARow {
-	directions := []direction{rightDirection(), downRightDirection(), upRightDirection(), upDirection()}
-	f := new(FourInARow)
-	for c := range model.Column {
-		if c+target-1 >= model.Column {
-			for r := range model.Row {
-				if r+target-1 >= model.Row {
-					break
-				}
-
-				if checkDirection(b, f, c, r, directions[3]) {
-					return f
-				}
-			}
-
-			continue
-		}
-
-		for r := range model.Row {
-			canUp, canDown := r+target-1 < model.Row, r-target+1 >= 0
-			if checkDirection(b, f, c, r, directions[0]) {
-				return f
-			}
-
-			if canDown && checkDirection(b, f, c, r, directions[1]) {
-				return f
-			}
-
-			if canUp && checkDirection(b, f, c, r, directions[2]) || checkDirection(b, f, c, r, directions[3]) {
-				return f
-			}
-		}
-	}
-
-	return nil
-}
-
-// Search from the current index on the Board and travel in the specified direction,
-// if the target length is achieved return true
-//
-// - cur index must start at 1, the 0th index should be set before the function is entered
-func targetSearch(b Board, f *FourInARow, cur int, dir direction) (bool, error) {
-	// set cur
-	f[cur].Column = f[cur-1].Column + dir.dx
-	f[cur].Row = f[cur-1].Row + dir.dy
-
-	// check if location is in range
-	if f[cur].Column < 0 || f[cur].Column >= model.Column || f[cur].Row < 0 || f[cur].Row >= model.Row {
-		return false, errors.New("not in range")
-	}
-
-	// check if last position is equal
-	if b[f[cur].Column][f[cur].Row] != b[f[cur-1].Column][f[cur-1].Row] {
-		return false, nil
-	}
-
-	// check if target reached
-	if cur == target-1 {
-		return true, nil
-	}
-
-	return targetSearch(b, f, cur+1, dir)
 }
