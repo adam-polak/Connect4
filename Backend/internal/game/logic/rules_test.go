@@ -2,7 +2,6 @@ package logic
 
 import (
 	"connect4/server/internal/game/model"
-	"fmt"
 	"testing"
 )
 
@@ -31,8 +30,6 @@ func Test_BasicVertical(t *testing.T) {
 			}
 		}
 	}
-
-	fmt.Println("✅ basic vertical test")
 }
 
 func Test_Last4Vertical(t *testing.T) {
@@ -64,8 +61,6 @@ func Test_Last4Vertical(t *testing.T) {
 			}
 		}
 	}
-
-	fmt.Println("✅ last 4 vertical test")
 }
 
 func Test_BasicHorizontal(t *testing.T) {
@@ -93,8 +88,6 @@ func Test_BasicHorizontal(t *testing.T) {
 			}
 		}
 	}
-
-	fmt.Println("✅ basic horizontal test")
 }
 
 func Test_LeftToRightDiagonalBasic(t *testing.T) {
@@ -126,8 +119,6 @@ func Test_LeftToRightDiagonalBasic(t *testing.T) {
 			}
 		}
 	}
-
-	fmt.Println("✅ basic left to right diagonal")
 }
 
 func Test_LeftToRightDiagonal(t *testing.T) {
@@ -171,8 +162,6 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 			}
 		}
 	}
-
-	fmt.Println("✅ left to right diagonal")
 }
 
 func Test_RightToLeftDiagonal(t *testing.T) {
@@ -216,6 +205,15 @@ func Test_RightToLeftDiagonal(t *testing.T) {
 			}
 		}
 	}
+}
 
-	fmt.Println("✅ right to left diagonal")
+func Test_Efficiency(t *testing.T) {
+	for range 100000 {
+		Test_BasicVertical(t)
+		Test_BasicHorizontal(t)
+		Test_Last4Vertical(t)
+		Test_LeftToRightDiagonalBasic(t)
+		Test_LeftToRightDiagonal(t)
+		Test_RightToLeftDiagonal(t)
+	}
 }
