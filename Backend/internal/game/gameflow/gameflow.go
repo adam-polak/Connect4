@@ -1,6 +1,9 @@
 package gameflow
 
-import "connect4/server/internal/game/logic"
+import (
+	"connect4/server/internal/game/logic"
+	"sync"
+)
 
 type GameOrchestrator struct {
 	player1     *Player
@@ -12,18 +15,26 @@ type GameOrchestrator struct {
 type gameNode struct {
 	game *GameOrchestrator
 	next *gameNode
+	prev *gameNode
 }
 
 var availableGames = &gameNode{
 	game: nil,
 	next: nil,
+	prev: nil,
 }
+
+var availableGamesMutex sync.Mutex
 
 func init() {
 	availableGames.next = availableGames
+	availableGames.prev = availableGames
 }
 
 func GetGameOrchestrator(p *Player) *GameOrchestrator {
+	availableGamesMutex.Lock()
+	defer availableGamesMutex.Unlock()
+
 	var g *GameOrchestrator
 	if availableGames.next == availableGames {
 		// create new game
@@ -34,13 +45,17 @@ func GetGameOrchestrator(p *Player) *GameOrchestrator {
 		// add game to available games list
 		availableGames.next = &gameNode{
 			game: g,
-			next: availableGames.next,
+			next: availableGames,
+			prev: availableGames,
 		}
+
+		availableGames.prev = availableGames.next
 	} else {
 		// get available game node
-		n := availableGames.next
+		n := availableGames.prev
 		// remove node from available list
-		availableGames.next = n.next
+		availableGames.prev = n.prev
+		availableGames.prev.next = availableGames
 		// set game to the available game
 		g = n.game
 		// set player 2

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 const (
@@ -26,7 +27,12 @@ type playerNode struct {
 
 var players *playerNode = nil
 
+var playersLock sync.Mutex
+
 func NewPlayer(key string, username string) (*Player, error) {
+	playersLock.Lock()
+	defer playersLock.Unlock()
+
 	p := getPlayer(key)
 	if p != nil && strings.Compare(p.Username, username) != 0 {
 		return nil, errors.New(PlayerAlreadyExists)
@@ -154,6 +160,9 @@ func doRemove(n *playerNode, key string) bool {
 }
 
 func RemovePlayer(key string) error {
+	playersLock.Lock()
+	defer playersLock.Unlock()
+
 	p, _ := GetPlayer(key)
 	if p == nil {
 		return errors.New(PlayerDoesNotExist)
