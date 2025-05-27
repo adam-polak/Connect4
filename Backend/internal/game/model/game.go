@@ -1,6 +1,8 @@
 package model
 
-import "errors"
+import (
+	"errors"
+)
 
 const (
 	Column     = 7
@@ -54,6 +56,12 @@ func (g Game) ColumnFull(c int) (bool, error) {
 	}
 
 	return g.board[c][Row-1] != NoPlayer, nil
+}
+
+func FromBoard(b [Column][Row]uint8) *Game {
+	return &Game{
+		board: b,
+	}
 }
 
 // Get a copy of the current state of the board

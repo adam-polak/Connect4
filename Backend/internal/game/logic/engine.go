@@ -56,7 +56,7 @@ func (c *Connect4Engine) DropPiece(p *string, col int) error {
 	}
 
 	// check for four ina row
-	f := Has4InARow(*c.game)
+	f := Has4InARow(c.game.GetBoard())
 	if f != nil {
 		// declare winner
 		c.winner = p

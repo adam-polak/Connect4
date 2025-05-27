@@ -9,7 +9,7 @@ const (
 	target = 4
 )
 
-type board [model.Column][model.Row]uint8
+type Board [model.Column][model.Row]uint8
 
 type Location struct {
 	Column int
@@ -18,16 +18,16 @@ type Location struct {
 
 type FourInARow [target]Location
 
-func diagonal4InRow(b board) *FourInARow {
-	l := leftDiagonal4InRow(b)
+func diagonal4InRow(b Board) *FourInARow {
+	l := downRightDiagonal4InRow(b)
 	if l != nil {
 		return l
 	}
 
-	return rightDiagonal4InRow(b)
+	return upRightDiagonal4InRow(b)
 }
 
-func leftDiagonal4InRow(b board) *FourInARow {
+func upRightDiagonal4InRow(b Board) *FourInARow {
 	f := new(FourInARow)
 	for c := 0; c < model.Column; c++ {
 		if c+target-1 >= model.Column {
@@ -50,7 +50,47 @@ func leftDiagonal4InRow(b board) *FourInARow {
 			}
 
 			len := 0
-			for p == b[loc.Column][loc.Row] && loc.Column < model.Column && loc.Row < model.Row {
+			for loc.Column < model.Column && loc.Row < model.Row && p == b[loc.Column][loc.Row] {
+				// Create new location
+				nLoc := Location{
+					Column: loc.Column,
+					Row:    loc.Row,
+				}
+				// Set location in FourInARow obj
+				f[len] = nLoc
+				// Increment length
+				len++
+				// Set current player at location
+				p = b[nLoc.Column][nLoc.Row]
+				// Traverse right diagonally
+				loc.Column++
+				loc.Row++
+				if len == target {
+					return f
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func downRightDiagonal4InRow(b Board) *FourInARow {
+	f := new(FourInARow)
+	for c := 0; c+target-1 < model.Column; c++ {
+		for r := model.Row - 1; r-target+1 >= 0; r-- {
+			loc := Location{
+				Column: c,
+				Row:    r,
+			}
+
+			p := b[c][r]
+			if p == model.NoPlayer {
+				continue
+			}
+
+			len := 0
+			for loc.Column < model.Column && loc.Row < model.Row && p == b[loc.Column][loc.Row] {
 				// Create new location
 				nLoc := Location{
 					Column: loc.Column,
@@ -64,7 +104,7 @@ func leftDiagonal4InRow(b board) *FourInARow {
 				p = b[nLoc.Column][nLoc.Row]
 				// Traverse left diagonally
 				loc.Column++
-				loc.Row++
+				loc.Row--
 				if len == target {
 					return f
 				}
@@ -75,55 +115,7 @@ func leftDiagonal4InRow(b board) *FourInARow {
 	return nil
 }
 
-func rightDiagonal4InRow(b board) *FourInARow {
-	f := new(FourInARow)
-	for c := model.Column - 1; c >= 0; c++ {
-		if c+target-1 >= model.Column {
-			break
-		}
-
-		for r := 0; r < model.Row; r++ {
-			if r+target-1 >= model.Row {
-				break
-			}
-
-			loc := Location{
-				Column: c,
-				Row:    r,
-			}
-
-			p := b[c][r]
-			if p == model.NoPlayer {
-				continue
-			}
-
-			len := 0
-			for p == b[loc.Column][loc.Row] && loc.Column < model.Column && loc.Row < model.Row {
-				// Create new location
-				nLoc := Location{
-					Column: loc.Column,
-					Row:    loc.Row,
-				}
-				// Set location in FourInARow obj
-				f[len] = nLoc
-				// Increment length
-				len++
-				// Set current player at location
-				p = b[nLoc.Column][nLoc.Row]
-				// Traverse right diagonally
-				loc.Column--
-				loc.Row++
-				if len == target {
-					return f
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func vertical4InRow(b board) *FourInARow {
+func vertical4InRow(b Board) *FourInARow {
 	f := new(FourInARow)
 	for c := range model.Column {
 		for p1 := 0; p1+target-1 < model.Row; {
@@ -155,7 +147,7 @@ func vertical4InRow(b board) *FourInARow {
 	return nil
 }
 
-func horizontal4InRow(b board) *FourInARow {
+func horizontal4InRow(b Board) *FourInARow {
 	f := new(FourInARow)
 	for r := range model.Row {
 		for p1 := 0; p1+target-1 < model.Column; {
@@ -187,8 +179,7 @@ func horizontal4InRow(b board) *FourInARow {
 	return nil
 }
 
-func Has4InARow(g model.Game) *FourInARow {
-	b := g.GetBoard()
+func Has4InARow(b Board) *FourInARow {
 	diag := diagonal4InRow(b)
 	if diag != nil {
 		return diag
@@ -244,11 +235,11 @@ func upRightDirection() direction {
 func downRightDirection() direction {
 	return direction{
 		dx: 1,
-		dy: 1,
+		dy: -1,
 	}
 }
 
-func checkDirection(b board, f *FourInARow, col int, row int, dir direction) bool {
+func checkDirection(b Board, f *FourInARow, col int, row int, dir direction) bool {
 	if b[col][row] == model.NoPlayer {
 		return false
 	}
@@ -263,12 +254,16 @@ func checkDirection(b board, f *FourInARow, col int, row int, dir direction) boo
 		Row:    row,
 	}
 
-	if dir.dx != 0 {
+	if dir.dx > 0 {
 		last.Column = last.Column + (dir.dx * target) - 1
+	} else if dir.dx < 0 {
+		last.Column = last.Column + (dir.dx * target) + 1
 	}
 
-	if dir.dy != 0 {
+	if dir.dy > 0 {
 		last.Row = last.Row + (dir.dy * target) - 1
+	} else if dir.dy < 0 {
+		last.Row = last.Row + (dir.dy * target) + 1
 	}
 
 	if b[last.Column][last.Row] != b[col][row] {
@@ -279,8 +274,8 @@ func checkDirection(b board, f *FourInARow, col int, row int, dir direction) boo
 	return found
 }
 
-func has4InARow(b board) *FourInARow {
-	directions := []direction{rightDirection(), upRightDirection(), downRightDirection(), upDirection()}
+func has4InARow(b Board) *FourInARow {
+	directions := []direction{rightDirection(), downRightDirection(), upRightDirection(), upDirection()}
 	f := new(FourInARow)
 	for c := range model.Column {
 		if c+target-1 >= model.Column {
@@ -293,21 +288,22 @@ func has4InARow(b board) *FourInARow {
 					return f
 				}
 			}
-		} else {
-			for r := range model.Row {
-				if r+target-1 >= model.Row {
-					if checkDirection(b, f, c, r, directions[0]) {
-						return f
-					}
 
-					continue
-				}
+			continue
+		}
 
-				for i := range directions {
-					if checkDirection(b, f, c, r, directions[i]) {
-						return f
-					}
-				}
+		for r := range model.Row {
+			canUp, canDown := r+target-1 < model.Row, r-target+1 >= 0
+			if checkDirection(b, f, c, r, directions[0]) {
+				return f
+			}
+
+			if canDown && checkDirection(b, f, c, r, directions[1]) {
+				return f
+			}
+
+			if canUp && checkDirection(b, f, c, r, directions[2]) || checkDirection(b, f, c, r, directions[3]) {
+				return f
 			}
 		}
 	}
@@ -315,11 +311,11 @@ func has4InARow(b board) *FourInARow {
 	return nil
 }
 
-// Search from the current index on the board and travel in the specified direction,
+// Search from the current index on the Board and travel in the specified direction,
 // if the target length is achieved return true
 //
 // - cur index must start at 1, the 0th index should be set before the function is entered
-func targetSearch(b board, f *FourInARow, cur int, dir direction) (bool, error) {
+func targetSearch(b Board, f *FourInARow, cur int, dir direction) (bool, error) {
 	// set cur
 	f[cur].Column = f[cur-1].Column + dir.dx
 	f[cur].Row = f[cur-1].Row + dir.dy

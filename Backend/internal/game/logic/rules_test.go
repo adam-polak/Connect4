@@ -12,7 +12,7 @@ func Test_BasicVertical(t *testing.T) {
 			g.DropPiece(c%2 == 0, c)
 		}
 
-		f := Has4InARow(*g)
+		f := Has4InARow(g.GetBoard())
 		if f == nil {
 			t.Error("Should detect vertical four in a row")
 			return
@@ -43,7 +43,7 @@ func Test_Last4Vertical(t *testing.T) {
 			}
 		}
 
-		f := Has4InARow(*g)
+		f := Has4InARow(g.GetBoard())
 		if f == nil {
 			t.Error("Should detect vertical four in a row")
 			return
@@ -70,7 +70,7 @@ func Test_BasicHorizontal(t *testing.T) {
 			g.DropPiece(i%2 == 0, c)
 		}
 
-		f := Has4InARow(*g)
+		f := Has4InARow(g.GetBoard())
 		if f == nil {
 			t.Error("Should detect horizontal four in a row")
 			return
@@ -90,38 +90,7 @@ func Test_BasicHorizontal(t *testing.T) {
 	}
 }
 
-func Test_LeftToRightDiagonalBasic(t *testing.T) {
-	for c := range model.Column - target + 1 {
-		g := new(model.Game)
-		for r := range target {
-			for i := range r {
-				g.DropPiece(i+r%2 == 0, c+r)
-			}
-
-			g.DropPiece(c%2 == 0, c+r)
-		}
-
-		f := Has4InARow(*g)
-		if f == nil {
-			t.Error("Should detect diagonal four in a row")
-			return
-		}
-
-		for i := range target {
-			if f[i].Column != c+i {
-				t.Errorf("Expected column %d was %d", c, f[i].Column)
-				return
-			}
-
-			if f[i].Row != i {
-				t.Errorf("Expected row %d was %d", i, f[i].Row)
-				return
-			}
-		}
-	}
-}
-
-func Test_LeftToRightDiagonal(t *testing.T) {
+func Test_UpRightDiagonal(t *testing.T) {
 	for c := 0; c+target-1 < model.Column; c++ {
 		for r := 0; r+target-1 < model.Row; r++ {
 			loc := Location{
@@ -129,21 +98,16 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 				Row:    r,
 			}
 
-			g := new(model.Game)
+			b := new(Board)
+			dir := upRightDirection()
 			for range target {
-				for range loc.Row {
-					g.DropPiece(
-						(c-loc.Column)%2 == 0,
-						loc.Column,
-					)
-				}
+				b[loc.Column][loc.Row] = model.PlayerOne
 
-				g.DropPiece(c%2 == 0, loc.Column)
-				loc.Column++
-				loc.Row++
+				loc.Column = loc.Column + dir.dx
+				loc.Row = loc.Row + dir.dy
 			}
 
-			f := Has4InARow(*g)
+			f := Has4InARow(*b)
 			if f == nil {
 				t.Error("Should detect diagonal four in a row")
 				return
@@ -164,29 +128,23 @@ func Test_LeftToRightDiagonal(t *testing.T) {
 	}
 }
 
-func Test_RightToLeftDiagonal(t *testing.T) {
-	for c := model.Column - target; c >= 0; c-- {
-		for r := 0; r+target-1 < model.Row; r++ {
+func Test_DownRightDiagonal(t *testing.T) {
+	for c := 0; c+target-1 < model.Column; c++ {
+		for r := model.Row - 1; r-target+1 >= 0; r-- {
 			loc := Location{
 				Column: c,
 				Row:    r,
 			}
 
-			g := new(model.Game)
+			b := new(Board)
+			dir := downRightDirection()
 			for range target {
-				for range loc.Row {
-					g.DropPiece(
-						(c-loc.Column)%2 == 0,
-						loc.Column,
-					)
-				}
-
-				g.DropPiece(c%2 == 0, loc.Column)
-				loc.Column++
-				loc.Row++
+				b[loc.Column][loc.Row] = model.PlayerOne
+				loc.Column = loc.Column + dir.dx
+				loc.Row = loc.Row + dir.dy
 			}
 
-			f := Has4InARow(*g)
+			f := Has4InARow(*b)
 			if f == nil {
 				t.Error("Should detect diagonal four in a row")
 				return
@@ -198,8 +156,8 @@ func Test_RightToLeftDiagonal(t *testing.T) {
 					return
 				}
 
-				if f[i].Row != loc.Row-target+i {
-					t.Errorf("Expected row %d was %d", loc.Row-target+i, f[i].Row)
+				if f[i].Row != loc.Row+target-i {
+					t.Errorf("Expected row %d was %d", loc.Row-i, f[i].Row)
 					return
 				}
 			}
@@ -212,8 +170,7 @@ func Test_Efficiency(t *testing.T) {
 		Test_BasicVertical(t)
 		Test_BasicHorizontal(t)
 		Test_Last4Vertical(t)
-		Test_LeftToRightDiagonalBasic(t)
-		Test_LeftToRightDiagonal(t)
-		Test_RightToLeftDiagonal(t)
+		Test_UpRightDiagonal(t)
+		Test_DownRightDiagonal(t)
 	}
 }
