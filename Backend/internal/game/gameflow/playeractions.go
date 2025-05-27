@@ -23,9 +23,7 @@ func (p *Player) PlayPiece(col int) error {
 		return errors.New(GameNotReady)
 	}
 
-	if !p.game.handleAction(p, doPlay{
-		Column: col,
-	}) {
+	if !p.game.handleAction(p, doPlay{Column: col}) {
 		return errors.New(FailedAction)
 	}
 
