@@ -3,7 +3,6 @@ package handler
 import (
 	"connect4/server/internal/game/gameflow"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -41,14 +40,12 @@ func getPlayer(b io.ReadCloser) *player {
 	defer b.Close()
 	s, err := io.ReadAll(b)
 	if err != nil {
-		fmt.Println("failed to read")
 		return nil
 	}
 
 	var p player
 	err = json.Unmarshal(s, &p)
 	if err != nil {
-		fmt.Println("Failed to decode")
 		return nil
 	}
 
