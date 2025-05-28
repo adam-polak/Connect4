@@ -1,19 +1,20 @@
 package handler
 
 import (
+	"connect4/server/internal/game/gameflow"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 )
 
-type CreatePlayerHandler struct{}
-
 type player struct {
-	loginKey string
-	username string
+	LoginKey string
+	Username string
 }
 
-func (c *CreatePlayerHandler) ServeHTTP(wr http.ResponseWriter, r *http.Request) {
+func CreatePlayerHandler(wr http.ResponseWriter, r *http.Request) {
 	if strings.Compare(r.Method, "POST") != 0 {
 		wr.WriteHeader(400)
 		return
@@ -24,8 +25,32 @@ func (c *CreatePlayerHandler) ServeHTTP(wr http.ResponseWriter, r *http.Request)
 		wr.WriteHeader(400)
 		return
 	}
+
+	// Create new player
+	_, err := gameflow.NewPlayer(p.LoginKey, p.Username)
+	if err != nil {
+		// player with key already exists with different username
+		wr.WriteHeader(http.StatusConflict)
+		return
+	}
+
+	wr.WriteHeader(http.StatusOK)
 }
 
 func getPlayer(b io.ReadCloser) *player {
-	return nil
+	defer b.Close()
+	s, err := io.ReadAll(b)
+	if err != nil {
+		fmt.Println("failed to read")
+		return nil
+	}
+
+	var p player
+	err = json.Unmarshal(s, &p)
+	if err != nil {
+		fmt.Println("Failed to decode")
+		return nil
+	}
+
+	return &p
 }

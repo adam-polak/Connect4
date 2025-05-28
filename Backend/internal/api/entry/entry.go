@@ -9,8 +9,8 @@ import (
 func StartServer() {
 	log.Println("🦍 Starting server")
 	// Add handlers
-	http.Handle("/player/create", new(handler.CreatePlayerHandler))
-	http.Handle("/game", new(handler.GameHandler))
+	http.HandleFunc("/player/create", handler.CreatePlayerHandler)
+	http.HandleFunc("/game", handler.GameHandler)
 	// Listen to port 8080
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
