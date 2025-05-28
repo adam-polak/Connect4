@@ -12,4 +12,5 @@ func (g *GameHandler) ServeHTTP(wr http.ResponseWriter, r *http.Request) {
 		wr.WriteHeader(400)
 		return
 	}
+
 }
