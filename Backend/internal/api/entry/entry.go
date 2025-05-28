@@ -1,7 +1,15 @@
 package entry
 
-import "fmt"
+import (
+	"connect4/server/internal/api/handler"
+	"log"
+	"net/http"
+)
 
 func StartServer() {
-	fmt.Println("Starting server...")
+	log.Println("🦍 Starting server")
+	// Add handlers
+	http.Handle("/game", new(handler.GameHandler))
+	// Listen to port 8080
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

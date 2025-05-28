@@ -2,7 +2,6 @@ package gameflow
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"sync"
 )
@@ -113,7 +112,6 @@ func GetPlayer(key string) (*Player, error) {
 
 func replaceNode(n *playerNode) *playerNode {
 	if n == nil {
-		fmt.Println("here")
 		return nil
 	} else if n.right == nil {
 		return n.left
