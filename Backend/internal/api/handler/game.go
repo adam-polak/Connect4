@@ -12,9 +12,12 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 func GameHandler(wr http.ResponseWriter, r *http.Request) {
+	enableCors(wr)
+
 	if len(r.Method) != 0 && strings.Compare(r.Method, "GET") != 0 {
 		wr.WriteHeader(http.StatusBadRequest)
 		return

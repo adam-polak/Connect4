@@ -14,6 +14,8 @@ type player struct {
 }
 
 func CreatePlayerHandler(wr http.ResponseWriter, r *http.Request) {
+	enableCors(wr)
+
 	if strings.Compare(r.Method, "POST") != 0 {
 		wr.WriteHeader(400)
 		return
