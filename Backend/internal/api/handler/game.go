@@ -2,7 +2,7 @@ package handler
 
 import (
 	"connect4/server/internal/game/gameflow"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -16,30 +16,106 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func writePump(c *websocket.Conn, ch chan string) {
-
+type sendError struct {
+	Error string
 }
 
-func readPump(c *websocket.Conn, ch chan string) {
-
+type doPlay struct {
+	Column int `json:"column"`
 }
 
-func observePlayer(p gameflow.Player, ch chan string) {
-	playerObserver := func(action interface{}) {
-		switch v := action.(type) {
-		case gameflow.GameReady:
-			ch <- "game is ready to play"
-		case gameflow.GameOver:
-			ch <- "game is over"
-			fmt.Println("game is over")
-		case gameflow.OpponentPlayed:
-			ch <- fmt.Sprintf("opponent played in column %d", v.Column)
+type logPlay struct {
+	Column int  `json:"column"`
+	IsSelf bool `json:"isSelf"` // boolean to tell client which player made the change
+}
+
+type playerJoined struct {
+	Username string `json:"username"`
+}
+
+func writePump(c *websocket.Conn, ch chan []byte) {
+	defer c.Close()
+
+	for {
+		msg, ok := <-ch
+		if !ok {
+			c.WriteJSON(sendError{Error: "A server error occurred"})
+			return
+		}
+
+		c.WriteMessage(websocket.TextMessage, msg)
+	}
+}
+
+func readPump(c *websocket.Conn, p *gameflow.Player, ch chan []byte) {
+	defer c.Close()
+
+	for {
+		var j interface{}
+		err := c.ReadJSON(&j)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		switch v := j.(type) {
+		case doPlay:
+			err = p.PlayPiece(v.Column)
+			if err != nil {
+				if strings.Compare(err.Error(), gameflow.FailedAction) != 0 {
+					log.Println(err)
+					return
+				}
+
+				b, err := json.Marshal(sendError{Error: gameflow.FailedAction})
+				if err != nil {
+					log.Println(err)
+					return
+				}
+
+				ch <- b
+				continue
+			}
+
+			b, err := json.Marshal(logPlay{Column: v.Column, IsSelf: true})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			ch <- b
 		default:
-			ch <- "case not recognized"
+			log.Println("JSON not recognized")
+			return
 		}
 	}
+}
 
-	p.RegisterObserver(playerObserver)
+func getPlayerObserver(ch chan []byte) func(interface{}) {
+	return func(action interface{}) {
+		switch v := action.(type) {
+		case gameflow.GameReady:
+			b, err := json.Marshal(playerJoined{Username: v.OpponentUsername})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			ch <- b
+		case gameflow.GameOver:
+			ch <- []byte("game is over")
+		case gameflow.OpponentPlayed:
+			b, err := json.Marshal(logPlay{Column: v.Column, IsSelf: false})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			ch <- b
+		default:
+			ch <- []byte("case not recognized")
+		}
+	}
 }
 
 func GameHandler(wr http.ResponseWriter, r *http.Request) {
@@ -56,14 +132,13 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := gameflow.GetPlayer(key)
+	ch := make(chan []byte)
+	obs := getPlayerObserver(ch)
+	p, err := gameflow.GetPlayer(key, &obs)
 	if err != nil {
 		wr.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	// Join a game
-	gameflow.JoinGame(p)
 
 	// Upgrade HTTP --> WebSocket
 	conn, err := upgrader.Upgrade(wr, r, nil)
@@ -72,9 +147,9 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeChannel := make(chan string)
+	go writePump(conn, ch)
+	go readPump(conn, p, ch)
 
-	observePlayer(*p, writeChannel)
-	go writePump(conn, writeChannel)
-	go readPump(conn, writeChannel)
+	// Join a game
+	gameflow.JoinGame(p)
 }

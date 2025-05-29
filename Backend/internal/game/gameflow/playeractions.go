@@ -1,6 +1,11 @@
 package gameflow
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"log"
+	"sync"
+)
 
 const (
 	GameNotReady     = "game not ready to play"
@@ -12,8 +17,10 @@ type OpponentPlayed struct {
 	Column int
 }
 
+var observerMutex sync.Mutex
+
 func (p *Player) PlayPiece(col int) error {
-	if p.game == nil || !p.game.readyToPlay {
+	if p.game == nil {
 		return errors.New(PlayerNotInAGame)
 	} else if !p.game.readyToPlay {
 		return errors.New(GameNotReady)
@@ -26,16 +33,17 @@ func (p *Player) PlayPiece(col int) error {
 	return nil
 }
 
-func (p *Player) notifyObservers(action interface{}) {
-	for i := range p.observers {
-		p.observers[i](action)
-	}
-}
-
-func (p *Player) RegisterObserver(f func(interface{})) {
-	p.observers = append(p.observers, f)
-}
-
 func (p *Player) handleAction(action interface{}) {
-	p.notifyObservers(action)
+	observerMutex.Lock()
+	defer observerMutex.Unlock()
+
+	if p.observer == nil {
+		log.Printf("%s observer is nil", p.Username)
+		return
+	}
+
+	fmt.Printf("%s calling observer\n", p.Username)
+
+	f := *p.observer
+	f(action)
 }

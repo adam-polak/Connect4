@@ -51,7 +51,7 @@ func Test_NewPlayerEqualsGetPlayer(t *testing.T) {
 		return
 	}
 
-	p2, e2 := GetPlayer(k)
+	p2, e2 := GetPlayer(k, nil)
 	if p2 == nil || e2 != nil {
 		t.Error("Shouldn't fail to get player")
 		return
@@ -95,13 +95,13 @@ func Test_RemovePlayerSmall(t *testing.T) {
 		}
 
 		for x, y := i+1, j-1; x < y; x, y = x+1, y-1 {
-			p1, _ := GetPlayer(arr[x])
+			p1, _ := GetPlayer(arr[x], nil)
 			if p1 == nil {
 				t.Error("Player should exist")
 				return
 			}
 
-			p2, _ := GetPlayer(arr[y])
+			p2, _ := GetPlayer(arr[y], nil)
 			if p2 == nil {
 				t.Error("Player should exist")
 				return
@@ -145,7 +145,7 @@ func Test_RemovePlayerLarge(t *testing.T) {
 				s2 += arr[(j+x)%len]
 			}
 
-			p, _ := GetPlayer(s2)
+			p, _ := GetPlayer(s2, nil)
 			if p == nil {
 				t.Error("Player should exist")
 				return

@@ -5,29 +5,24 @@ import { useEffect, useState } from "react";
 
 export default function Page() {
     const router = useRouter()
-    const params = useSearchParams();
-    const [key, setKey] = useState<string | null>('');
-    useEffect(() => {
-        if(key !== '') {
-            return;
-        }
+    const key = useSearchParams().get("key");
+    const [opponent, setOppenent] = useState('');
 
-        const k = params.get('key');
-        if(k == null) {
+    useEffect(() => {
+        if(key == null) {
             router.push('/');
             return;
         }
 
         let uri = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        uri += '//localhost:8080/game?key=' + k;
+        uri += '//localhost:8080/game?key=' + key;
         const ws = new WebSocket(uri);
 
         ws.onopen = () => {
-            alert('connection opened!');
         }
 
         ws.onmessage = (e) => {
-
+            alert(e.data)
         }
 
         ws.onclose = (e) => {
@@ -37,7 +32,7 @@ export default function Page() {
         ws.onerror = () => {
 
         }
-    }, [key, setKey]);
+    }, [key]);
 
     return (
         <div>

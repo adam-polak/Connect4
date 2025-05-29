@@ -12,9 +12,9 @@ const (
 )
 
 type Player struct {
-	Username  string
-	observers []func(interface{})
-	game      *GameOrchestrator
+	Username string
+	observer *func(interface{})
+	game     *GameOrchestrator
 }
 
 type playerNode struct {
@@ -101,11 +101,13 @@ func getPlayer(key string) *Player {
 	return getPlayerRecursive(players, key)
 }
 
-func GetPlayer(key string) (*Player, error) {
+func GetPlayer(key string, observer *func(interface{})) (*Player, error) {
 	p := getPlayer(key)
 	if p == nil {
 		return nil, errors.New(PlayerDoesNotExist)
 	}
+
+	p.observer = observer
 
 	return p, nil
 }
@@ -161,7 +163,7 @@ func RemovePlayer(key string) error {
 	playersLock.Lock()
 	defer playersLock.Unlock()
 
-	p, _ := GetPlayer(key)
+	p := getPlayer(key)
 	if p == nil {
 		return errors.New(PlayerDoesNotExist)
 	}

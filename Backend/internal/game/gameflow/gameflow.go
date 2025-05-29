@@ -2,6 +2,7 @@ package gameflow
 
 import (
 	"connect4/server/internal/game/logic"
+	"log"
 	"sync"
 )
 
@@ -32,7 +33,9 @@ type GameOver struct {
 	Winner string
 }
 
-type GameReady struct{}
+type GameReady struct {
+	OpponentUsername string
+}
 
 var availableGamesMutex sync.Mutex
 
@@ -44,6 +47,11 @@ func init() {
 func JoinGame(p *Player) {
 	availableGamesMutex.Lock()
 	defer availableGamesMutex.Unlock()
+
+	if p.game != nil {
+		log.Println("Player already in a game")
+		return
+	}
 
 	var g *GameOrchestrator
 	if availableGames.next == availableGames {
@@ -65,7 +73,7 @@ func JoinGame(p *Player) {
 		n := availableGames.prev
 		// remove node from available list
 		availableGames.prev = n.prev
-		availableGames.prev.next = availableGames
+		n.prev.next = availableGames
 		// set game to the available game
 		g = n.game
 		// set player 2
@@ -73,7 +81,8 @@ func JoinGame(p *Player) {
 		// set game to ready state
 		g.readyToPlay = true
 		// notify players
-		g.notifyPlayers(GameReady{})
+		g.player1.handleAction(GameReady{OpponentUsername: g.player2.Username})
+		g.player2.handleAction(GameReady{OpponentUsername: g.player1.Username})
 		// create game engine
 		g.engine = logic.NewConnect4Engine(g.player1.Username, g.player2.Username)
 	}
