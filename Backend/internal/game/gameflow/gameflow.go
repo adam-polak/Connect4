@@ -82,7 +82,7 @@ func JoinGame(p *Player) {
 		g.player1.handleAction(GameReady{OpponentUsername: g.player2.Username})
 		g.player2.handleAction(GameReady{OpponentUsername: g.player1.Username})
 		// create game engine
-		g.engine = logic.NewConnect4Engine(g.player1.Username, g.player2.Username)
+		g.engine = logic.NewConnect4Engine(g.player1.key, g.player2.key)
 	}
 
 	p.game = g
@@ -112,7 +112,7 @@ func (g *GameOrchestrator) handleAction(p *Player, action interface{}) bool {
 			return false
 		}
 
-		err := g.engine.DropPiece(&p.Username, v.Column)
+		err := g.engine.DropPiece(&p.key, v.Column)
 		if err != nil {
 			return false
 		} else {

@@ -13,6 +13,7 @@ const (
 
 type Player struct {
 	Username string
+	key      string
 	observer *func(interface{})
 	game     *GameOrchestrator
 }
@@ -40,6 +41,7 @@ func NewPlayer(key string, username string) (*Player, error) {
 	}
 
 	p = &Player{
+		key:      key,
 		Username: username,
 	}
 

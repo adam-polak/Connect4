@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type sendError struct {
-	Error string
+	Error string `json:"error"`
 }
 
 type doPlay struct {
@@ -32,6 +32,10 @@ type logPlay struct {
 
 type playerJoined struct {
 	Username string `json:"username"`
+}
+
+type gameOver struct {
+	YouWin bool `json:"youWin"`
 }
 
 type informPlayer struct {
@@ -121,7 +125,7 @@ func readPump(c *websocket.Conn, p *gameflow.Player, ch chan []byte) {
 	}
 }
 
-func getPlayerObserver(ch chan []byte) func(interface{}) {
+func getPlayerObserver(ch chan []byte, playerKey string) func(interface{}) {
 	return func(action interface{}) {
 		switch v := action.(type) {
 		case gameflow.GameReady:
@@ -133,7 +137,13 @@ func getPlayerObserver(ch chan []byte) func(interface{}) {
 
 			ch <- b
 		case gameflow.GameOver:
-			ch <- []byte("game is over")
+			b, err := json.Marshal(gameOver{YouWin: strings.Compare(playerKey, v.Winner) == 0})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			ch <- b
 		case gameflow.OpponentPlayed:
 			b, err := json.Marshal(logPlay{Column: v.Column, IsSelf: false})
 			if err != nil {
@@ -163,7 +173,7 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 	}
 
 	ch := make(chan []byte)
-	obs := getPlayerObserver(ch)
+	obs := getPlayerObserver(ch, key)
 	p, err := gameflow.GetPlayer(key, &obs)
 	if err != nil {
 		wr.WriteHeader(http.StatusUnauthorized)

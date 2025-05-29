@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 type UserJoined = {
     username: string
@@ -67,7 +67,7 @@ function Connect4({ ws, board } : { ws : WebSocket | null, board: Connect4Board 
                     board.map((col, i) => 
                         <div 
                             key={i} 
-                            className={`flex flex-col gap-1 cursor-pointer transition-all duration-200 p-1 rounded ${
+                            className={`flex flex-col gap-5 cursor-pointer transition-all duration-200 p-1 rounded ${
                                 hoveredColumn === i ? 'bg-blue-500 transform scale-105' : ''
                             }`}
                             onMouseEnter={() => setHoveredColumn(i)}
@@ -86,7 +86,7 @@ function Connect4({ ws, board } : { ws : WebSocket | null, board: Connect4Board 
                                     return (
                                         <div 
                                             key={j} 
-                                            className={`w-14 h-14 ${bgColor} rounded-full border-2 border-blue-800 shadow-inner`}
+                                            className={`w-8 h-8 ${bgColor} rounded-full border-2 border-blue-800 shadow-inner`}
                                         />
                                     );
                                 })
@@ -127,7 +127,7 @@ function GameContent() {
     const [board, setBoard] = useState<Connect4Board>(initBoard());
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const connectWebSocket = () => {
+    const connectWebSocket = useCallback(() => {
         if(key == null) {
             router.push('/');
             return;
@@ -138,8 +138,9 @@ function GameContent() {
             wsRef.current.close();
         }
 
-        let uri = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        uri += '//localhost:8080/game?key=' + key;
+        let uri = window.location.origin.split(":")[1];
+        uri = (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + uri;
+        uri += ':8080/game?key=' + key;
         
         const ws = new WebSocket(uri);
         wsRef.current = ws;
@@ -189,27 +190,33 @@ function GameContent() {
                 if (obj.column !== undefined && obj.isSelf !== undefined) {
                     const logPlay = obj as LogPlay;
                     // Update board with the move
-                    setBoard(prevBoard => {
-                        const newBoard = [...prevBoard];
-                        const column = newBoard[logPlay.column];
-                        
-                        // Find the lowest empty space in the column
-                        for (let row = Rows - 1; row >= 0; row--) {
-                            if (column[row] === 0) {
-                                column[row] = logPlay.isSelf ? 1 : -1;
-                                break;
-                            }
+                    const newBoard = [...board];
+                    const column = newBoard[logPlay.column];
+                    
+                    // Find the lowest empty space in the column
+                    for (let row = Rows - 1; row >= 0; row--) {
+                        if (column[row] === 0) {
+                            column[row] = logPlay.isSelf ? 1 : -1;
+                            break;
                         }
-                        
-                        return newBoard;
-                    });
+                    }
+                    
+                    setBoard(newBoard);
                     return;
+                }
+
+                // Handle game over
+                if (obj.youWin !== undefined) {
+                    alert(`Game over ${obj.youWin ? "you win!" : "you lose :("}`);
+                    return
                 }
 
                 // Handle errors
                 if (obj.error !== undefined) {
                     const error = obj as ErrorMessage;
-                    alert("Game error: " + error.error);
+                    if(error.error === "failed to do action") {
+                        alert("Not your turn yet");
+                    }
                     return;
                 }
 
@@ -219,7 +226,7 @@ function GameContent() {
                 console.error("Error parsing message:", error, "Raw message:", e.data);
             }
         };
-    };
+    }, [board, setBoard]);
 
     useEffect(() => {
         connectWebSocket();
@@ -233,7 +240,7 @@ function GameContent() {
                 wsRef.current.close();
             }
         };
-    }, [key]);
+    }, [key, connectWebSocket]);
 
     return (
         <div className="min-h-screen flex items-center justify-center">

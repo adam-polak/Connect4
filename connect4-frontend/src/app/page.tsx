@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const minUsernameLength = 5;
+  const minUsernameLength = 3;
   const maxUsernameLength = 15;
   const [input, setInput] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -24,7 +24,9 @@ export default function Home() {
 
     try {
       const key = nanoid();
-      const result = await fetch("http://localhost:8080/player/create", {
+      let url = window.location.origin.split(":3000")[0];
+      url += ":8080/player/create";
+      const result = await fetch(url, {
         method: "POST",
         body: JSON.stringify(
           { 
@@ -47,6 +49,11 @@ export default function Home() {
         <div className="space-y-4">
           <input
             onChange={e => setInput(e.target.value)}
+            onKeyUp={e => {
+              if(e.key === 'Enter') {
+                joinGame();
+              }
+            }}
             type="text" 
             placeholder="Enter your username" 
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
