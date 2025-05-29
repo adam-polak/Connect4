@@ -33,6 +33,11 @@ type playerJoined struct {
 	Username string `json:"username"`
 }
 
+type informPlayer struct {
+	SelfUsername     string `json:"selfUsername"`
+	OpponentUsername string `json:"opponentUsername"`
+}
+
 func writePump(c *websocket.Conn, ch chan []byte) {
 	defer c.Close()
 
@@ -149,6 +154,27 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 
 	go writePump(conn, ch)
 	go readPump(conn, p, ch)
+
+	opp := p.GetOpponentUsername()
+	var b []byte
+	if opp == nil {
+		b, err = json.Marshal(informPlayer{
+			SelfUsername:     p.Username,
+			OpponentUsername: "",
+		})
+	} else {
+		b, err = json.Marshal(informPlayer{
+			SelfUsername:     p.Username,
+			OpponentUsername: *opp,
+		})
+	}
+
+	if err != nil {
+		log.Println(err)
+		return
+	} else {
+		ch <- b
+	}
 
 	// Join a game
 	gameflow.JoinGame(p)

@@ -32,6 +32,19 @@ func (p *Player) PlayPiece(col int) error {
 	return nil
 }
 
+func (p *Player) GetOpponentUsername() *string {
+	if p.game == nil {
+		return nil
+	}
+
+	opp := p.game.getOpponent(p)
+	if opp == nil {
+		return nil
+	}
+
+	return &opp.Username
+}
+
 func (p *Player) handleAction(action interface{}) {
 	observerMutex.Lock()
 	defer observerMutex.Unlock()
