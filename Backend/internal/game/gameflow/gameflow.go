@@ -24,6 +24,16 @@ var availableGames = &gameNode{
 	prev: nil,
 }
 
+type doPlay struct {
+	Column int
+}
+
+type GameOver struct {
+	Winner string
+}
+
+type GameReady struct{}
+
 var availableGamesMutex sync.Mutex
 
 func init() {
@@ -31,7 +41,7 @@ func init() {
 	availableGames.prev = availableGames
 }
 
-func GetGameOrchestrator(p *Player) *GameOrchestrator {
+func JoinGame(p *Player) {
 	availableGamesMutex.Lock()
 	defer availableGamesMutex.Unlock()
 
@@ -62,13 +72,13 @@ func GetGameOrchestrator(p *Player) *GameOrchestrator {
 		g.player2 = p
 		// set game to ready state
 		g.readyToPlay = true
+		// notify players
+		g.notifyPlayers(GameReady{})
 		// create game engine
 		g.engine = logic.NewConnect4Engine(g.player1.Username, g.player2.Username)
 	}
 
 	p.game = g
-
-	return g
 }
 
 func (g *GameOrchestrator) getOpponent(p *Player) *Player {
@@ -77,14 +87,6 @@ func (g *GameOrchestrator) getOpponent(p *Player) *Player {
 	}
 
 	return g.player1
-}
-
-type doPlay struct {
-	Column int
-}
-
-type GameOver struct {
-	Winner string
 }
 
 func (g *GameOrchestrator) notifyPlayers(action interface{}) {

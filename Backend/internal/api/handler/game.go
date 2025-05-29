@@ -2,6 +2,7 @@ package handler
 
 import (
 	"connect4/server/internal/game/gameflow"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -13,6 +14,32 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
+}
+
+func writePump(c *websocket.Conn, ch chan string) {
+
+}
+
+func readPump(c *websocket.Conn, ch chan string) {
+
+}
+
+func observePlayer(p gameflow.Player, ch chan string) {
+	playerObserver := func(action interface{}) {
+		switch v := action.(type) {
+		case gameflow.GameReady:
+			ch <- "game is ready to play"
+		case gameflow.GameOver:
+			ch <- "game is over"
+			fmt.Println("game is over")
+		case gameflow.OpponentPlayed:
+			ch <- fmt.Sprintf("opponent played in column %d", v.Column)
+		default:
+			ch <- "case not recognized"
+		}
+	}
+
+	p.RegisterObserver(playerObserver)
 }
 
 func GameHandler(wr http.ResponseWriter, r *http.Request) {
@@ -29,11 +56,14 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := gameflow.GetPlayer(key)
+	p, err := gameflow.GetPlayer(key)
 	if err != nil {
 		wr.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+
+	// Join a game
+	gameflow.JoinGame(p)
 
 	// Upgrade HTTP --> WebSocket
 	conn, err := upgrader.Upgrade(wr, r, nil)
@@ -42,16 +72,9 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for {
-		messageType, buf, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
-		}
+	writeChannel := make(chan string)
 
-		if err := conn.WriteMessage(messageType, buf); err != nil {
-			log.Println(err)
-			return
-		}
-	}
+	observePlayer(*p, writeChannel)
+	go writePump(conn, writeChannel)
+	go readPump(conn, writeChannel)
 }

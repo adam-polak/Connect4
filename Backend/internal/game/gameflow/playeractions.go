@@ -8,10 +8,6 @@ const (
 	FailedAction     = "failed to do action"
 )
 
-type PlayerObserver interface {
-	HandleAction(interface{})
-}
-
 type OpponentPlayed struct {
 	Column int
 }
@@ -32,12 +28,12 @@ func (p *Player) PlayPiece(col int) error {
 
 func (p *Player) notifyObservers(action interface{}) {
 	for i := range p.observers {
-		p.observers[i].HandleAction(action)
+		p.observers[i](action)
 	}
 }
 
-func (p *Player) RegisterObserver(o PlayerObserver) {
-	p.observers = append(p.observers, o)
+func (p *Player) RegisterObserver(f func(interface{})) {
+	p.observers = append(p.observers, f)
 }
 
 func (p *Player) handleAction(action interface{}) {

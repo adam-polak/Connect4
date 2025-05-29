@@ -13,7 +13,7 @@ const (
 
 type Player struct {
 	Username  string
-	observers []PlayerObserver
+	observers []func(interface{})
 	game      *GameOrchestrator
 }
 
