@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -38,34 +39,60 @@ type informPlayer struct {
 	OpponentUsername string `json:"opponentUsername"`
 }
 
-func writePump(c *websocket.Conn, ch chan []byte) {
-	defer c.Close()
+func writePump(c *websocket.Conn, msgs chan []byte, username string) {
+	ticker := time.NewTicker(54 * time.Second)
+
+	defer func() {
+		ticker.Stop()
+		c.Close()
+	}()
 
 	for {
-		msg, ok := <-ch
-		if !ok {
-			c.WriteJSON(sendError{Error: "A server error occurred"})
-			return
-		}
+		select {
+		case msg, ok := <-msgs:
+			if !ok {
+				c.WriteJSON(sendError{Error: "A server error occurred"})
+				return
+			}
 
-		c.WriteMessage(websocket.TextMessage, msg)
+			c.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			err := c.WriteMessage(websocket.TextMessage, msg)
+			if err != nil {
+				log.Printf("Write error for %s: %v", username, err)
+				return
+			}
+		case <-ticker.C:
+			c.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := c.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("Ping failed for %s\n", username)
+				return
+			}
+		}
 	}
 }
 
 func readPump(c *websocket.Conn, p *gameflow.Player, ch chan []byte) {
 	defer c.Close()
 
+	c.SetReadDeadline(time.Now().Add(60 * time.Second))
+	c.SetPongHandler(func(string) error {
+		c.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
 	for {
-		var j interface{}
-		err := c.ReadJSON(&j)
+		_, msg, err := c.ReadMessage()
 		if err != nil {
-			log.Println(err)
 			return
 		}
 
-		switch v := j.(type) {
-		case doPlay:
-			err = p.PlayPiece(v.Column)
+		var play doPlay
+		err = json.Unmarshal(msg, &play)
+		if err != nil {
+			log.Println(err)
+			return
+		} else {
+			err = p.PlayPiece(play.Column)
 			if err != nil {
 				if strings.Compare(err.Error(), gameflow.FailedAction) != 0 {
 					log.Println(err)
@@ -82,16 +109,14 @@ func readPump(c *websocket.Conn, p *gameflow.Player, ch chan []byte) {
 				continue
 			}
 
-			b, err := json.Marshal(logPlay{Column: v.Column, IsSelf: true})
+			b, err := json.Marshal(logPlay{Column: play.Column, IsSelf: true})
 			if err != nil {
 				log.Println(err)
 				return
 			}
 
 			ch <- b
-		default:
-			log.Println("JSON not recognized")
-			return
+			continue
 		}
 	}
 }
@@ -152,7 +177,7 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go writePump(conn, ch)
+	go writePump(conn, ch, p.Username)
 	go readPump(conn, p, ch)
 
 	opp := p.GetOpponentUsername()

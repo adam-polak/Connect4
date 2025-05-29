@@ -38,7 +38,7 @@ export default function Home() {
         router.push('/connect4?key=' + key);
       }
     } catch {}
-  }, [input]);
+  }, [input, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

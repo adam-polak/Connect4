@@ -2,7 +2,6 @@ package gameflow
 
 import (
 	"connect4/server/internal/game/logic"
-	"log"
 	"sync"
 )
 
@@ -49,7 +48,6 @@ func JoinGame(p *Player) {
 	defer availableGamesMutex.Unlock()
 
 	if p.game != nil {
-		log.Println("Player already in a game")
 		return
 	}
 

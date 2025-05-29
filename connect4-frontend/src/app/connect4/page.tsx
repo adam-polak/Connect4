@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 type UserJoined = {
     username: string
@@ -10,6 +10,15 @@ type UserJoined = {
 type Info = {
     selfUsername: string
     opponentUsername: string
+}
+
+type LogPlay = {
+    column: number
+    isSelf: boolean
+}
+
+type ErrorMessage = {
+    error: string
 }
 
 function DisplayNames(
@@ -36,24 +45,20 @@ type Connect4Board = number[][];
 const Columns = 7;
 const Rows = 6;
 
-function Connect4({ board} : { board: Connect4Board }) {
+function Connect4({ ws, board } : { ws : WebSocket | null, board: Connect4Board }) {
     const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
 
-    function createRow() {
-        const arr = [];
-        for(let i = 0; i < Rows; i++) {
-            arr.push(0);
-        }
-        return arr;
-    }
-    
-    while(board.length < Columns) {
-        board.push(createRow());
-    }
-
     function handleColumnClick(columnIndex: number) {
-        alert(`Clicked column: ${columnIndex}`);
-    };
+        if(ws == null || ws.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        const message = {
+            column: columnIndex
+        };
+
+        ws.send(JSON.stringify(message));
+    }
     
     return (
         <div className="inline-block bg-blue-600 p-2 rounded-lg shadow-lg">
@@ -94,57 +99,157 @@ function Connect4({ board} : { board: Connect4Board }) {
     );
 }
 
-export default function Page() {
+function initBoard() : Connect4Board {
+    const board : Connect4Board = [];
+    function makeRow() {
+        const arr = [];
+        for(let i = 0; i < Rows; i++) {
+            arr.push(0);
+        }
+
+        return arr;
+    }
+
+    while(board.length < Columns) {
+        board.push(makeRow());
+    }
+
+    return board;
+}
+
+function GameContent() {
     const router = useRouter()
     const key = useSearchParams().get("key");
     const [username, setUsername] = useState('');
-    const [opponent, setOppenent] = useState('');
+    const [opponent, setOpponent] = useState('');
+    const [connectionStatus, setConnectionStatus] = useState('Connecting...');
     const wsRef = useRef<WebSocket | null>(null);
+    const [board, setBoard] = useState<Connect4Board>(initBoard());
+    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
+    const connectWebSocket = () => {
         if(key == null) {
             router.push('/');
             return;
         }
 
+        // Close existing connection if any
+        if (wsRef.current) {
+            wsRef.current.close();
+        }
+
         let uri = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         uri += '//localhost:8080/game?key=' + key;
+        
         const ws = new WebSocket(uri);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+            setConnectionStatus('Connected');
+        };
+
+        ws.onclose = (event) => {
+            setConnectionStatus('Disconnected');
+            
+            // Don't auto-reconnect on normal closure or if component is unmounting
+            if (event.code !== 1000 && event.code !== 1001) {
+                // Reconnect after 3 seconds
+                reconnectTimeoutRef.current = setTimeout(() => {
+                    connectWebSocket();
+                }, 3000);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error("WebSocket error:", error);
+            setConnectionStatus('Error');
+        };
 
         ws.onmessage = (e) => {
-            const obj = JSON.parse(e.data);
+            
+            try {
+                const obj = JSON.parse(e.data);
 
-            const info = obj as Info
-            if(info.selfUsername != null && info.opponentUsername != null) {
-                setUsername(info.selfUsername);
-                setOppenent(info.opponentUsername);
-                return;
+                // Handle initial player info
+                if (obj.selfUsername !== undefined && obj.opponentUsername !== undefined) {
+                    const info = obj as Info;
+                    setUsername(info.selfUsername);
+                    setOpponent(info.opponentUsername);
+                    return;
+                }
+
+                // Handle player joined
+                if (obj.username !== undefined) {
+                    const userJoined = obj as UserJoined;
+                    setOpponent(userJoined.username);
+                    return;
+                }
+
+                // Handle game moves
+                if (obj.column !== undefined && obj.isSelf !== undefined) {
+                    const logPlay = obj as LogPlay;
+                    // Update board with the move
+                    setBoard(prevBoard => {
+                        const newBoard = [...prevBoard];
+                        const column = newBoard[logPlay.column];
+                        
+                        // Find the lowest empty space in the column
+                        for (let row = Rows - 1; row >= 0; row--) {
+                            if (column[row] === 0) {
+                                column[row] = logPlay.isSelf ? 1 : -1;
+                                break;
+                            }
+                        }
+                        
+                        return newBoard;
+                    });
+                    return;
+                }
+
+                // Handle errors
+                if (obj.error !== undefined) {
+                    const error = obj as ErrorMessage;
+                    alert("Game error: " + error.error);
+                    return;
+                }
+
+                // Handle other message types
+                alert("Message type not handled");
+            } catch (error) {
+                console.error("Error parsing message:", error, "Raw message:", e.data);
             }
-
-            if((obj as UserJoined).username != null) {
-                setOppenent((obj as UserJoined).username);
-                return;
-            }
-
-            console.log(obj);
-            alert("json not recognized");
-        }
-
-        return () => {
-            ws.close()
-        }
-    }, [key]);
+        };
+    };
 
     useEffect(() => {
-        console.log("user:", username, "opp:",opponent)
-    }, [username, opponent])
+        connectWebSocket();
+
+        return () => {
+            // Cleanup on unmount
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+            }
+            if (wsRef.current) {
+                wsRef.current.close();
+            }
+        };
+    }, [key]);
 
     return (
         <div className="min-h-screen flex items-center justify-center">
             <div className="flex flex-col gap-10 items-center">
+                <div className="text-sm text-gray-500">Status: {connectionStatus}</div>
                 <DisplayNames username={username} opponent={opponent} />
-                <Connect4 board={[]} />
+                <Connect4 board={board} ws={wsRef.current} />
             </div>
         </div>
     );
+}
+
+export default function Page() {
+    return (
+        <Suspense>
+            <GameContent />
+        </Suspense>
+    )
 }
