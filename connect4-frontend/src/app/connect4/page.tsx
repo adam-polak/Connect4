@@ -3,6 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+type UserJoined = {
+    username: string
+}
+
 export default function Page() {
     const router = useRouter()
     const key = useSearchParams().get("key");
@@ -22,7 +26,15 @@ export default function Page() {
         }
 
         ws.onmessage = (e) => {
-            alert(e.data)
+            const obj = JSON.parse(e.data);
+
+            if((obj as UserJoined).username != null) {
+                setOppenent((obj as UserJoined).username);
+                return;
+            }
+
+
+            alert("json not recognized");
         }
 
         ws.onclose = (e) => {
@@ -36,7 +48,15 @@ export default function Page() {
 
     return (
         <div>
-            <h1>{key} Ready to play!</h1>
+            {
+                opponent.length == 0 && 
+                <h1>{key} ready to play!</h1>
+            }
+
+            {
+                opponent.length != 0 &&
+                <h1>{key} vs {opponent}</h1>
+            }
         </div>
     );
 }

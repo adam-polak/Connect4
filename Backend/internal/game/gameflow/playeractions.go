@@ -2,7 +2,6 @@ package gameflow
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 )
@@ -41,8 +40,6 @@ func (p *Player) handleAction(action interface{}) {
 		log.Printf("%s observer is nil", p.Username)
 		return
 	}
-
-	fmt.Printf("%s calling observer\n", p.Username)
 
 	f := *p.observer
 	f(action)
