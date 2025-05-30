@@ -41,6 +41,9 @@ type gameOver struct {
 type informPlayer struct {
 	SelfUsername     string `json:"selfUsername"`
 	OpponentUsername string `json:"opponentUsername"`
+	GameWinner       int    `json:"gameWinner"`
+	Starter          bool   `json:"starter"`
+	Plays            []int  `json:"plays"`
 }
 
 func writePump(c *websocket.Conn, msgs chan []byte, username string) {
@@ -68,7 +71,6 @@ func writePump(c *websocket.Conn, msgs chan []byte, username string) {
 		case <-ticker.C:
 			c.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := c.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Printf("Ping failed for %s\n", username)
 				return
 			}
 		}
@@ -196,11 +198,31 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 		b, err = json.Marshal(informPlayer{
 			SelfUsername:     p.Username,
 			OpponentUsername: "",
+			GameWinner:       0,
 		})
 	} else {
+		w := p.GetGameWinner()
+		var gw int
+		if len(w) == 0 {
+			// no winner
+			gw = 0
+		} else if strings.Compare(w, key) == 0 {
+			// winner is player 1 i.e. self
+			gw = 1
+		} else {
+			// winner is player 2 i.e. opponent
+			gw = 2
+		}
+
+		s := p.GetStartingPlayer()
+		st := strings.Compare(s, key) == 0
+
 		b, err = json.Marshal(informPlayer{
 			SelfUsername:     p.Username,
 			OpponentUsername: *opp,
+			GameWinner:       gw,
+			Starter:          st,
+			Plays:            p.GetPlays(),
 		})
 	}
 

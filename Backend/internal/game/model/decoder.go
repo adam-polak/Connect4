@@ -8,7 +8,6 @@ func Decode(n uint64) *Game {
 		full := (col >> Row) & ((1 << 3) - 1)
 		for j := range full {
 			player := (col >> j) & 1
-
 			g.DropPiece(player == 0, i)
 		}
 	}

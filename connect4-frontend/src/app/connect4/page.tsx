@@ -10,6 +10,9 @@ type UserJoined = {
 type Info = {
     selfUsername: string
     opponentUsername: string
+    gameWinner: number
+    starter: boolean
+    plays: number[]
 }
 
 type LogPlay = {
@@ -117,6 +120,7 @@ function initBoard() : Connect4Board {
     return board;
 }
 
+
 function GameContent() {
     const router = useRouter()
     const key = useSearchParams().get("key");
@@ -126,6 +130,9 @@ function GameContent() {
     const wsRef = useRef<WebSocket | null>(null);
     const [board, setBoard] = useState<Connect4Board>(initBoard());
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [gameWinner, setGameWinner] = useState<string | null>(null);
+    const [starter, setStarter] = useState<boolean>(false);
+    const [boardUpToDate, setBoardUpToDate] = useState<boolean>(false);
 
     const connectWebSocket = useCallback(() => {
         if(key == null) {
@@ -172,10 +179,77 @@ function GameContent() {
                 const obj = JSON.parse(e.data);
 
                 // Handle initial player info
-                if (obj.selfUsername !== undefined && obj.opponentUsername !== undefined) {
-                    const info = obj as Info;
+                const info = obj as Info;
+                if (
+                    info.selfUsername !== undefined 
+                    && info.opponentUsername !== undefined
+                    && info.gameWinner !== undefined
+                    && info.starter !== undefined
+                    && info.plays !== undefined
+                ) {
+                    console.log("game winner", info.gameWinner);
+                    switch(info.gameWinner) {
+                        case 1:
+                            setGameWinner('You');
+                            break;
+                        case 2:
+                            setGameWinner('Opponent')
+                            break;
+                        default:
+                            setGameWinner(null);
+                            break;
+                    }
+
                     setUsername(info.selfUsername);
                     setOpponent(info.opponentUsername);
+                    setStarter(info.starter);
+                    if(info.plays.length === 0 || boardUpToDate) {
+                        return;
+                    }
+
+                    function makeEmptyBoard() {
+                        const b : Connect4Board = [];
+                        for(let i = 0; i < Columns; i++) {
+                            const arr = [];
+                            for(let j = 0; j < Rows; j++) {
+                                arr.push(0);
+                            }
+
+                            b.push(arr);
+                        }
+
+                        return b;
+                    }
+
+                    console.log(info.plays);
+
+                    const b = makeEmptyBoard();
+                    function dropPiece(b : Connect4Board, c : number, player : number) {
+                        for(let r = Rows - 1; r >= 0; r--) {
+                            if(b[c][r] === 0) {
+                                b[c][r] = player;
+                                return;
+                            }
+                        }
+                    }
+
+                    let p = info.starter;
+                    for(let i = 0; i < info.plays.length; i++) {
+                        // fill with players
+                        dropPiece(b, info.plays[i], p ? 1 : -1);
+                        p = !p;
+                    }
+
+                    // add empty spots
+                    for(let i = 0; i < Columns; i++) {
+                        while(b[i].length < Rows) {
+                            b[i].push(0);
+                        }
+                    }
+
+                    setBoardUpToDate(true);
+                    setBoard(b);
+
                     return;
                 }
 
@@ -207,7 +281,7 @@ function GameContent() {
 
                 // Handle game over
                 if (obj.youWin !== undefined) {
-                    alert(`Game over ${obj.youWin ? "you win!" : "you lose :("}`);
+                    setGameWinner(obj.youWin ? 'You' : 'Opponent');
                     return
                 }
 
@@ -226,7 +300,7 @@ function GameContent() {
                 console.error("Error parsing message:", error, "Raw message:", e.data);
             }
         };
-    }, [board, setBoard]);
+    }, [board, setBoard, setUsername, setOpponent, setGameWinner, setStarter, boardUpToDate, setBoardUpToDate]);
 
     useEffect(() => {
         connectWebSocket();
@@ -247,6 +321,7 @@ function GameContent() {
             <div className="flex flex-col gap-10 items-center">
                 <div className="text-sm text-gray-500">Status: {connectionStatus}</div>
                 <DisplayNames username={username} opponent={opponent} />
+                { gameWinner && <h2>{gameWinner} win{gameWinner === 'Opponent' ? 's' : ''}!</h2> }
                 <Connect4 board={board} ws={wsRef.current} />
             </div>
         </div>

@@ -13,11 +13,19 @@ type Connect4Engine struct {
 	p1       string
 	p2       string
 	cur_turn bool
+	starter  string
 }
 
 func NewConnect4Engine(p1 string, p2 string) Connect4Engine {
 	g := new(model.Game)
 	cur := rand.Int()%2 == 0
+	var starter string
+	if cur {
+		starter = p1
+	} else {
+		starter = p2
+	}
+
 	return Connect4Engine{
 		winner:   nil,
 		round:    1,
@@ -25,7 +33,16 @@ func NewConnect4Engine(p1 string, p2 string) Connect4Engine {
 		p1:       p1,
 		p2:       p2,
 		cur_turn: cur,
+		starter:  starter,
 	}
+}
+
+func (c *Connect4Engine) GetStartingPlayer() string {
+	return c.starter
+}
+
+func (c *Connect4Engine) GetPlays() []int {
+	return c.game.GetPlays()
 }
 
 func (c *Connect4Engine) GetWinner() *string {

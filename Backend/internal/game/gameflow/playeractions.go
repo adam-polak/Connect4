@@ -45,6 +45,38 @@ func (p *Player) GetOpponentUsername() *string {
 	return &opp.Username
 }
 
+func (p *Player) GetGameWinner() string {
+	if p.game == nil {
+		return ""
+	}
+
+	return p.game.getWinner()
+}
+
+func (p *Player) GetStartingPlayer() string {
+	if p.game == nil {
+		return ""
+	}
+
+	return p.game.getStartingPlayer()
+}
+
+func (p *Player) GetPlays() []int {
+	if p.game == nil {
+		return []int{}
+	}
+
+	return p.game.getPlays()
+}
+
+func (p *Player) GetBoard() uint64 {
+	if p.game == nil {
+		return 0
+	}
+
+	return p.game.getBoard()
+}
+
 func (p *Player) handleAction(action interface{}) {
 	observerMutex.Lock()
 	defer observerMutex.Unlock()

@@ -101,6 +101,43 @@ func (g *GameOrchestrator) notifyPlayers(action interface{}) {
 	g.player2.handleAction(action)
 }
 
+func (g *GameOrchestrator) getWinner() string {
+	if !g.readyToPlay {
+		return ""
+	}
+
+	w := g.engine.GetWinner()
+	if w == nil {
+		return ""
+	}
+
+	return *w
+}
+
+func (g *GameOrchestrator) getBoard() uint64 {
+	if !g.readyToPlay {
+		return 0
+	}
+
+	return g.engine.Board()
+}
+
+func (g *GameOrchestrator) getStartingPlayer() string {
+	if !g.readyToPlay {
+		return ""
+	}
+
+	return g.engine.GetStartingPlayer()
+}
+
+func (g *GameOrchestrator) getPlays() []int {
+	if !g.readyToPlay {
+		return []int{}
+	}
+
+	return g.engine.GetPlays()
+}
+
 func (g *GameOrchestrator) handleAction(p *Player, action interface{}) bool {
 	if g.player1 != p && g.player2 != p {
 		panic("player is not in game")

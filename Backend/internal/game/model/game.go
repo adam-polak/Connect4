@@ -19,6 +19,7 @@ const (
 
 type Game struct {
 	board [Column][Row]uint8
+	log   []int
 }
 
 // Drop a piece in the desired column.
@@ -46,6 +47,8 @@ func (g *Game) DropPiece(p bool, c int) error {
 		g.board[c][spot] = PlayerTwo
 	}
 
+	g.log = append(g.log, c)
+
 	return nil
 }
 
@@ -62,6 +65,12 @@ func FromBoard(b [Column][Row]uint8) *Game {
 	return &Game{
 		board: b,
 	}
+}
+
+func (g *Game) GetPlays() []int {
+	p := []int{}
+	p = append(p, g.log...)
+	return p
 }
 
 // Get a copy of the current state of the board
