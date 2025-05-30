@@ -130,6 +130,22 @@ func (g *GameOrchestrator) getStartingPlayer() string {
 	return g.engine.GetStartingPlayer()
 }
 
+func (g *GameOrchestrator) isPlayersTurn(p *Player) bool {
+	if !g.readyToPlay {
+		return false
+	}
+
+	return g.engine.IsPlayersTurn(p.key)
+}
+
+func (g *GameOrchestrator) leaveGame(p *Player) {
+	if p.game != g {
+		return
+	}
+
+	p.game = nil
+}
+
 func (g *GameOrchestrator) getPlays() []int {
 	if !g.readyToPlay {
 		return []int{}

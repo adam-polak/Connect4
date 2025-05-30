@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,12 +18,18 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
+var playerLock sync.Mutex
+
 type sendError struct {
 	Error string `json:"error"`
 }
 
 type doPlay struct {
 	Column int `json:"column"`
+}
+
+type newGame struct {
+	Requested bool `json:"requested"`
 }
 
 type logPlay struct {
@@ -43,6 +50,7 @@ type informPlayer struct {
 	OpponentUsername string `json:"opponentUsername"`
 	GameWinner       int    `json:"gameWinner"`
 	Starter          bool   `json:"starter"`
+	YourTurn         bool   `json:"yourTurn"`
 	Plays            []int  `json:"plays"`
 }
 
@@ -92,13 +100,16 @@ func readPump(c *websocket.Conn, p *gameflow.Player, ch chan []byte) {
 			return
 		}
 
+		log.Printf("Incoming: %s\n", string(msg))
+
 		var play doPlay
-		err = json.Unmarshal(msg, &play)
-		if err != nil {
-			log.Println(err)
-			return
-		} else {
+		decoder := json.NewDecoder(strings.NewReader(string(msg)))
+		decoder.DisallowUnknownFields()
+		err = decoder.Decode(&play)
+		if err == nil {
+			playerLock.Lock()
 			err = p.PlayPiece(play.Column)
+			playerLock.Unlock()
 			if err != nil {
 				if strings.Compare(err.Error(), gameflow.FailedAction) != 0 {
 					log.Println(err)
@@ -122,6 +133,16 @@ func readPump(c *websocket.Conn, p *gameflow.Player, ch chan []byte) {
 			}
 
 			ch <- b
+			continue
+		}
+
+		var newGame newGame
+		err = json.Unmarshal(msg, &newGame)
+		if err == nil {
+			playerLock.Lock()
+			p.FindNewGame()
+			playerLock.Unlock()
+
 			continue
 		}
 	}
@@ -192,16 +213,21 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 	go writePump(conn, ch, p.Username)
 	go readPump(conn, p, ch)
 
+	playerLock.Lock()
 	opp := p.GetOpponentUsername()
+	playerLock.Unlock()
 	var b []byte
 	if opp == nil {
 		b, err = json.Marshal(informPlayer{
 			SelfUsername:     p.Username,
 			OpponentUsername: "",
 			GameWinner:       0,
+			Plays:            []int{},
 		})
 	} else {
+		playerLock.Lock()
 		w := p.GetGameWinner()
+		playerLock.Unlock()
 		var gw int
 		if len(w) == 0 {
 			// no winner
@@ -214,6 +240,7 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 			gw = 2
 		}
 
+		playerLock.Lock()
 		s := p.GetStartingPlayer()
 		st := strings.Compare(s, key) == 0
 
@@ -222,8 +249,10 @@ func GameHandler(wr http.ResponseWriter, r *http.Request) {
 			OpponentUsername: *opp,
 			GameWinner:       gw,
 			Starter:          st,
+			YourTurn:         p.IsYourTurn(),
 			Plays:            p.GetPlays(),
 		})
+		playerLock.Unlock()
 	}
 
 	if err != nil {

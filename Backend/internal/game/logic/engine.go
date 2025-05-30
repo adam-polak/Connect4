@@ -4,6 +4,7 @@ import (
 	"connect4/server/internal/game/model"
 	"errors"
 	"math/rand"
+	"strings"
 )
 
 type Connect4Engine struct {
@@ -35,6 +36,16 @@ func NewConnect4Engine(p1 string, p2 string) Connect4Engine {
 		cur_turn: cur,
 		starter:  starter,
 	}
+}
+
+func (c *Connect4Engine) IsPlayersTurn(k string) bool {
+	if strings.Compare(c.p1, k) == 0 {
+		return c.cur_turn
+	} else if strings.Compare(c.p2, k) == 0 {
+		return !c.cur_turn
+	}
+
+	return false
 }
 
 func (c *Connect4Engine) GetStartingPlayer() string {

@@ -61,6 +61,14 @@ func (p *Player) GetStartingPlayer() string {
 	return p.game.getStartingPlayer()
 }
 
+func (p *Player) IsYourTurn() bool {
+	if p.game == nil {
+		return false
+	}
+
+	return p.game.isPlayersTurn(p)
+}
+
 func (p *Player) GetPlays() []int {
 	if p.game == nil {
 		return []int{}
@@ -75,6 +83,16 @@ func (p *Player) GetBoard() uint64 {
 	}
 
 	return p.game.getBoard()
+}
+
+func (p *Player) FindNewGame() {
+	if p.game == nil {
+		return
+	}
+
+	p.game.leaveGame(p)
+
+	JoinGame(p)
 }
 
 func (p *Player) handleAction(action interface{}) {

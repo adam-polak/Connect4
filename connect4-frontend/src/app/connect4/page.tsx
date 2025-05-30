@@ -12,6 +12,7 @@ type Info = {
     opponentUsername: string
     gameWinner: number
     starter: boolean
+    yourTurn : boolean
     plays: number[]
 }
 
@@ -48,7 +49,10 @@ type Connect4Board = number[][];
 const Columns = 7;
 const Rows = 6;
 
-function Connect4({ ws, board } : { ws : WebSocket | null, board: Connect4Board }) {
+function Connect4(
+    { ws, board, yourTurn } 
+    : { ws : WebSocket | null, board: Connect4Board, yourTurn : boolean | null }
+) {
     const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
 
     function handleColumnClick(columnIndex: number) {
@@ -64,39 +68,49 @@ function Connect4({ ws, board } : { ws : WebSocket | null, board: Connect4Board 
     }
     
     return (
-        <div className="inline-block bg-blue-600 p-2 rounded-lg shadow-lg">
-            <div className="flex flex-row gap-1">
-                { 
-                    board.map((col, i) => 
-                        <div 
-                            key={i} 
-                            className={`flex flex-col gap-5 cursor-pointer transition-all duration-200 p-1 rounded ${
-                                hoveredColumn === i ? 'bg-blue-500 transform scale-105' : ''
-                            }`}
-                            onMouseEnter={() => setHoveredColumn(i)}
-                            onMouseLeave={() => setHoveredColumn(null)}
-                            onClick={() => handleColumnClick(i)}
-                        >
-                            { 
-                                col.map((space, j) => {
-                                    let bgColor = "bg-white";
-                                    if (space < 0) {
-                                        bgColor = "bg-red-500";
-                                    } else if (space > 0) {
-                                        bgColor = "bg-yellow-400";
-                                    }
-                                    
-                                    return (
-                                        <div 
-                                            key={j} 
-                                            className={`w-8 h-8 ${bgColor} rounded-full border-2 border-blue-800 shadow-inner`}
-                                        />
-                                    );
-                                })
-                            }
-                        </div>
-                    )
-                }
+        <div>
+            {
+                yourTurn !== null &&
+                <h1 className={
+                    `${yourTurn ? "text-green-700" : "text-red-500"} text-center text-xl mb-2`
+                }>
+                    { yourTurn ? 'Your' : "Opponent's"} turn
+                </h1>
+            }
+            <div className="inline-block bg-blue-600 p-2 rounded-lg shadow-lg">
+                <div className="flex flex-row gap-1">
+                    { 
+                        board.map((col, i) => 
+                            <div 
+                                key={i} 
+                                className={`flex flex-col gap-5 cursor-pointer transition-all duration-200 p-1 rounded ${
+                                    hoveredColumn === i ? 'bg-blue-500 transform scale-105' : ''
+                                }`}
+                                onMouseEnter={() => setHoveredColumn(i)}
+                                onMouseLeave={() => setHoveredColumn(null)}
+                                onClick={() => handleColumnClick(i)}
+                            >
+                                { 
+                                    col.map((space, j) => {
+                                        let bgColor = "bg-white";
+                                        if (space < 0) {
+                                            bgColor = "bg-red-500";
+                                        } else if (space > 0) {
+                                            bgColor = "bg-yellow-400";
+                                        }
+                                        
+                                        return (
+                                            <div 
+                                                key={j} 
+                                                className={`w-8 h-8 ${bgColor} rounded-full border-2 border-blue-800 shadow-inner`}
+                                            />
+                                        );
+                                    })
+                                }
+                            </div>
+                        )
+                    }
+                </div>
             </div>
         </div>
     );
@@ -120,6 +134,37 @@ function initBoard() : Connect4Board {
     return board;
 }
 
+function FindNewGame(
+    {ws, gameWinner, func} 
+    : {ws : WebSocket | null, gameWinner : string | null, func : () => void}
+) {
+    function handleClick() {
+        if(ws == null || ws.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        ws.send(JSON.stringify({ requested: true }));
+        func();
+    }
+
+    if(!gameWinner) {
+        return <></>
+    }
+
+    return (
+        <div className="flex flex-row gap-4 items-center">
+            <h1 className={`${
+                    gameWinner === 'Opponent' 
+                    ? 'text-red-500'
+                    : 'text-green-700'
+                } text-2xl`}
+            >
+                {gameWinner} win{gameWinner === 'Opponent' ? 's' : ''}!
+            </h1> 
+            <button onClick={handleClick} type="button" className="cursor-pointer text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xl px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Play again</button>
+        </div>
+    )
+}
 
 function GameContent() {
     const router = useRouter()
@@ -131,8 +176,22 @@ function GameContent() {
     const [board, setBoard] = useState<Connect4Board>(initBoard());
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [gameWinner, setGameWinner] = useState<string | null>(null);
-    const [starter, setStarter] = useState<boolean>(false);
     const [boardUpToDate, setBoardUpToDate] = useState<boolean>(false);
+    const [yourTurn, setYourTurn] = useState<boolean | null>(null);
+
+    const reset = useCallback(() => {
+        setOpponent('');
+        setBoard(initBoard());
+        setBoardUpToDate(false);
+        setGameWinner(null);
+        setYourTurn(null);
+    }, [
+        setOpponent, 
+        setBoard,
+        setGameWinner,
+        setBoardUpToDate,
+        setYourTurn
+    ])
 
     const connectWebSocket = useCallback(() => {
         if(key == null) {
@@ -186,8 +245,8 @@ function GameContent() {
                     && info.gameWinner !== undefined
                     && info.starter !== undefined
                     && info.plays !== undefined
+                    && info.yourTurn !== undefined
                 ) {
-                    console.log("game winner", info.gameWinner);
                     switch(info.gameWinner) {
                         case 1:
                             setGameWinner('You');
@@ -202,7 +261,8 @@ function GameContent() {
 
                     setUsername(info.selfUsername);
                     setOpponent(info.opponentUsername);
-                    setStarter(info.starter);
+                    setYourTurn(info.opponentUsername === '' || info.gameWinner !== 0 ? null : info.yourTurn);
+
                     if(info.plays.length === 0 || boardUpToDate) {
                         return;
                     }
@@ -220,8 +280,6 @@ function GameContent() {
 
                         return b;
                     }
-
-                    console.log(info.plays);
 
                     const b = makeEmptyBoard();
                     function dropPiece(b : Connect4Board, c : number, player : number) {
@@ -251,6 +309,8 @@ function GameContent() {
                     setBoard(b);
 
                     return;
+                } else if(info.selfUsername !== undefined) {
+                    setUsername(info.selfUsername);
                 }
 
                 // Handle player joined
@@ -300,7 +360,7 @@ function GameContent() {
                 console.error("Error parsing message:", error, "Raw message:", e.data);
             }
         };
-    }, [board, setBoard, setUsername, setOpponent, setGameWinner, setStarter, boardUpToDate, setBoardUpToDate]);
+    }, [board, setBoard, setUsername, setOpponent, setGameWinner, boardUpToDate, setBoardUpToDate, board]);
 
     useEffect(() => {
         connectWebSocket();
@@ -321,8 +381,8 @@ function GameContent() {
             <div className="flex flex-col gap-10 items-center">
                 <div className="text-sm text-gray-500">Status: {connectionStatus}</div>
                 <DisplayNames username={username} opponent={opponent} />
-                { gameWinner && <h2>{gameWinner} win{gameWinner === 'Opponent' ? 's' : ''}!</h2> }
-                <Connect4 board={board} ws={wsRef.current} />
+                <Connect4 yourTurn={yourTurn} board={board} ws={wsRef.current} />
+                <FindNewGame func={reset} ws={wsRef.current} gameWinner={gameWinner} />
             </div>
         </div>
     );
